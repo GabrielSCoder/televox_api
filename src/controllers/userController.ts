@@ -1,4 +1,4 @@
-import { create, deleteUser, getById, update } from "../db/userDb"
+import { create, deleteUser, getById, update, getByUsername } from "../db/userDb"
 
 type resType = {
     status: (code: number) => any;
@@ -35,6 +35,15 @@ export const deleteAsync = async (req: { params: {id : number} }, res: resType) 
 export const getAsync = async (req: { params: {id : number} },  res: resType) => {
     try {
         const resp = await getById(req.params.id)
+        return res.status(200).json({success : true, dados : {...resp}})
+    } catch (error : any) {
+        return res.status(500).json({success : false, error : error.message})
+    }
+}
+
+export const getUsernameAsync = async (req : {params : {username : string}}, res : resType) => {
+    try {
+        const resp = await getByUsername(req.params.username)
         return res.status(200).json(resp)
     } catch (error : any) {
         return res.status(500).json({error : error.message})

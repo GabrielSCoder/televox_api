@@ -1,13 +1,13 @@
 import express from "express";
-import { postAsync, deleteAsync, getAsync, updateAsync } from "../controllers/userController";
-import { login } from "../controllers/authController";
+import { postAsync, deleteAsync, getAsync, updateAsync, getUsernameAsync } from "../controllers/userController";
+import { authenticate } from "../services/authConfig";
 
 const userRouter = express.Router();
 
 userRouter.post("/", postAsync);   
-userRouter.get("/:id", getAsync); 
-userRouter.put("/", updateAsync);  
-userRouter.delete("/:id", deleteAsync);
-userRouter.post("/auth", login); 
+userRouter.get("/:id", authenticate, getAsync);
+// userRouter.get("/:username", getUsernameAsync);
+userRouter.put("/", authenticate, updateAsync);  
+userRouter.delete("/:id", authenticate, deleteAsync);
 
 export default userRouter;

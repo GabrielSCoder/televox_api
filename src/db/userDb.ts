@@ -1,12 +1,13 @@
-import { usuarioDTO, usuarioForm } from "../types/usuarioT";
+import { where } from "sequelize";
+import { usuarioAnyDTO, usuarioDTO, usuarioForm } from "../types/usuarioT";
 
 const { User } = require("../models");
 
 const validate = async (data: any) => {
 
-    var erros : string[] = []
+    var erros: string[] = []
 
-    if (data.nome == "") {
+    if (!data.nome || data.nome == "") {
         erros.push("Nome vazio")
     }
 
@@ -22,35 +23,59 @@ const validate = async (data: any) => {
         }
     }
 
-    if (data.password == "") {
+    if (!data.username || data.username == "") {
+
+        erros.push("Nome de usuário obrigatório")
+
+    } else {
+        const userExists = await User.findOne({ where: { username: data.username } })
+
+        if (userExists) {
+            erros.push("Nome de usuário já utilizado")
+        }
+    }
+
+    if (!data.senha || data.senha == "") {
         erros.push("Senha vazia")
     }
 
     if (erros.length > 0) throw new Error(erros.toString())
 }
 
-const convertToDTO = async (data : usuarioForm) => {
+const convertToDTO = async (data: usuarioForm) => {
 
-    var item : usuarioDTO = {
-        id : data.id,
-        nome : data.nome,
-        email : data.email,
-        genero : data.genero,
-        img_url : data.img_url,
-        data_nascimento : data.data_nascimento,
-        data_criacao : data.data_criacao,
-        data_modificacao : data.data_modificacao
+    var item: usuarioDTO = {
+        id: data.id,
+        nome: data.nome,
+        username: data.username,
+        email: data.email,
+        genero: data.genero,
+        img_url: data.img_url,
+        data_nascimento: data.data_nascimento,
+        data_criacao: data.data_criacao,
+        data_modificacao: data.data_modificacao
     }
 
     return item
 }
 
-export const create = async (data: { nome: any; email: any; password: any; }) => {
+const convertToAnnymoDTO = async (data : usuarioDTO) => {
+
+    var item : usuarioAnyDTO = {
+        id : data.id,
+        nome : data.nome,
+        username : data.username
+    }
+
+    return item
+}
+
+export const create = async (data: { nome: any; email: any; password: any; username: string }) => {
 
     console.log(data)
     await validate(data)
 
-    const user = await User.create({ ...data, data_criacao : Date.now(), data_nascimento : Date.now()});
+    const user = await User.create({ ...data, data_criacao: Date.now(), data_nascimento: Date.now() });
 
     return user
 }
@@ -64,6 +89,15 @@ export const getById = async (id: any) => {
     return await convertToDTO(resp)
 }
 
+export const getByUsername = async (username: string) => {
+
+    const resp = await User.findOne({ where: { username: username } })
+
+    if (!resp) throw new Error("Username não encontrado")
+
+    return await convertToAnnymoDTO(resp)
+}
+
 export const update = async (data: { id: any; nome: any; email: any; senha: any; data_criacao: any; }) => {
 
     await validate(data)
@@ -73,9 +107,9 @@ export const update = async (data: { id: any; nome: any; email: any; senha: any;
         {
             nome: data.nome,
             email: data.email,
-            senha: data.senha, 
+            senha: data.senha,
             data_criacao: data.data_criacao,
-            data_edicao: new Date() 
+            data_edicao: new Date()
         },
         {
             where: { id: data.id }
@@ -86,10 +120,10 @@ export const update = async (data: { id: any; nome: any; email: any; senha: any;
 }
 
 export const deleteUser = async (id: any) => {
-    
+
     await getById(id)
 
-    const resp = await User.destroy({where : {id : id}})
+    const resp = await User.destroy({ where: { id: id } })
 
     return resp
 }

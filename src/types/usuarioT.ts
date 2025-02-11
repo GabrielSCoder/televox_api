@@ -7,12 +7,20 @@ export type usuarioForm = {
     data_nascimento : Date
     genero : string
     img_url : string
+    username : string
 } & baseT
 
 export type usuarioDTO = {
     nome: string
+    username : string
     email: string
     data_nascimento : Date
     genero : string
     img_url : string
 } & baseT
+
+export type usuarioAnyDTO = {
+    id : number
+    nome : string
+    username : string
+}

@@ -91,6 +91,8 @@ export const getById = async (id: any) => {
 
 export const getByUsername = async (username: string) => {
 
+    console.log("username", username)
+
     const resp = await User.findOne({ where: { username: username } })
 
     if (!resp) throw new Error("Username não encontrado")

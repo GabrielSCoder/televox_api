@@ -79,6 +79,7 @@ export const login2 = async (req: any, res: any) => {
         sameSite: "Strict",
         domain: "localhost",
         path: "/auth/refresh",
+        maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
     return res.status(200).json({ usuario_id: user.id, message: "Login realizado!", token: accessToken })
@@ -90,7 +91,7 @@ export const checkLogin = (req: any, res: any) => {
         const accessToken = req.headers['authorization'];
 
         if (!accessToken) {
-            return res.status(401).json({ error: "Não autorizado" });
+            return res.status(401).json({ success: false, error: "Não autorizado" });
         }
 
         const token = accessToken.split(' ')[1];
@@ -102,8 +103,26 @@ export const checkLogin = (req: any, res: any) => {
             return res.status(401).json({ error: "Token inválido" });
         }
 
-        return res.json({ id: decoded.id });
+        return res.json({ success: true, dados: { id: decoded.id } });
     } catch (error) {
-        return res.status(401).json({ error: "Token inválido ou expirado" });
+        return res.status(401).json({ success: false, error: "Token inválido ou expirado" });
     }
 };
+
+export const logout = (req: any, res: any) => {
+    try {
+        res.cookie("refreshToken", "", {
+            httpOnly: true,
+            secure: false,
+            sameSite: "Strict",
+            domain: "localhost",
+            path: "/auth/refresh",
+            expire: new Date(0)
+        })
+
+        return res.status(200).json({ success: true, message: "Logout realizado!" });
+        
+    } catch (error) {
+        return res.status(500).json({ success : false, message : error})
+    }
+}

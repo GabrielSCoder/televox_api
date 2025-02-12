@@ -44,8 +44,8 @@ export const getAsync = async (req: { params: {id : number} },  res: resType) =>
 export const getUsernameAsync = async (req : {params : {username : string}}, res : resType) => {
     try {
         const resp = await getByUsername(req.params.username)
-        return res.status(200).json(resp)
+        return res.status(200).json({success : true, dados : resp})
     } catch (error : any) {
-        return res.status(500).json({error : error.message})
+        return res.status(500).json({success : false, error : error.message})
     }
 }

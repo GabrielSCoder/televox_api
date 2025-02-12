@@ -19,3 +19,18 @@ export type postDTO = {
     qtd_comentarios : number
     qt_compartilhamentos: number
 } & baseT
+
+export type postListDTO = {
+    quantidade : number
+    listaPostagens : Array <postDTO>
+}
+
+export type postFilterDTO = {
+    usuario : string | number
+    tamanhoPagina : number
+    numeroPagina : number
+}
+
+export type responsePostFilterDTO = {
+    numeroPaginas : number
+} & postListDTO

@@ -6,7 +6,7 @@ const userRouter = express.Router();
 
 userRouter.post("/", postAsync);   
 userRouter.get("/:id", authenticate, getAsync);
-// userRouter.get("/:username", getUsernameAsync);
+userRouter.get("/find/:username", getUsernameAsync);
 userRouter.put("/", authenticate, updateAsync);  
 userRouter.delete("/:id", authenticate, deleteAsync);
 

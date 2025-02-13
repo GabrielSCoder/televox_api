@@ -28,6 +28,7 @@ export const refreshToken = async (req : any, res : any) => {
             secure: false,
             sameSite: "Strict",
             path: "/auth/refresh",
+            maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
         res.json({success: true, token: accessToken });

@@ -97,7 +97,7 @@ export const getByUsername = async (username: string) => {
 
     if (!resp) throw new Error("Username não encontrado")
 
-    return await convertToAnnymoDTO(resp)
+    return await convertToDTO(resp)
 }
 
 export const update = async (data: { id: any; nome: any; email: any; senha: any; data_criacao: any; }) => {

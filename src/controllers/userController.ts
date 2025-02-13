@@ -46,6 +46,6 @@ export const getUsernameAsync = async (req : {params : {username : string}}, res
         const resp = await getByUsername(req.params.username)
         return res.status(200).json({success : true, dados : resp})
     } catch (error : any) {
-        return res.status(500).json({success : false, error : error.message})
+        return res.status(404).json({success : false, error : error.message})
     }
 }

@@ -1,5 +1,5 @@
 import { where } from "sequelize"
-import { postDTO, postFilterDTO, postForm, postListDTO } from "../types/postT"
+import { postDTO, postFilterDTO, postForm, postListDTO, responsePostFilterDTO } from "../types/postT"
 
 const { Post, User } = require("../models")
 
@@ -89,7 +89,7 @@ export const getAllPostByIdUser = async (id: number) => {
 
     if (resp.length > 0) {
         const pageItem: postListDTO = {
-            quantidade: resp.length,
+            quantidade_postagens: resp.length,
             listaPostagens: resp
         }
 
@@ -105,7 +105,13 @@ export const getPostsByFilter = async (filter: postFilterDTO) => {
     var list
 
     if (filter.usuario && typeof (filter.usuario) == "string") {
-        resp = await Post.findAll({ where: { username: filter.usuario } })
+        const user = await User.findOne({ where: { username: filter.usuario } })
+        console.log(filter.usuario)
+        if (user) {
+            resp = await Post.findAll({ where: { usuario_id: user.id } })
+        } else {
+            throw new Error("Usuario não encontrado")
+        }
     } else if (filter.usuario && typeof (filter.usuario) == "number") {
         resp = await Post.findAll({ where: { usuario_id: filter.usuario } })
     } else {
@@ -123,5 +129,12 @@ export const getPostsByFilter = async (filter: postFilterDTO) => {
         list = resp.slice(primeiraPos)
     }
 
-    return list
+    const item: responsePostFilterDTO = {
+        quantidade_postagens: resp.length,
+        pagina: filter.numeroPagina,
+        numeroPaginas: nSegments,
+        listaPostagens: list
+    }
+
+    return item
 }

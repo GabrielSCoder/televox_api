@@ -21,7 +21,7 @@ export type postDTO = {
 } & baseT
 
 export type postListDTO = {
-    quantidade : number
+    quantidade_postagens : number
     listaPostagens : Array <postDTO>
 }
 
@@ -32,5 +32,6 @@ export type postFilterDTO = {
 }
 
 export type responsePostFilterDTO = {
+    pagina : number
     numeroPaginas : number
 } & postListDTO

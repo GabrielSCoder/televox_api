@@ -1,4 +1,4 @@
-import { create, deleteUser, getById, update, getByUsername } from "../db/userDb"
+import { create, deleteUser, getById, update, getByUsername, verifyEmail } from "../db/userDb"
 
 type resType = {
     status: (code: number) => any;
@@ -38,6 +38,16 @@ export const getAsync = async (req: { params: {id : number} },  res: resType) =>
         return res.status(200).json({success : true, dados : {...resp}})
     } catch (error : any) {
         return res.status(500).json({success : false, error : error.message})
+    }
+}
+
+export const verifyEmailAsync = async (req: { body: {email : string} },  res: resType) => {
+
+    try {
+        const resp = await verifyEmail(req.body.email)
+        return res.status(200).json(resp)
+    } catch (error : any) {
+        return res.status(500).json({error : error.message})
     }
 }
 

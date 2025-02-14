@@ -100,6 +100,24 @@ export const getByUsername = async (username: string) => {
     return await convertToDTO(resp)
 }
 
+export const verifyEmail = async (email : string) => {
+
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+
+    if (!email || email && typeof(email) != "string") {
+       return ({succes : false , message : "E-mail obrigatório"})
+    } else if (email.match(emailPattern)) {
+        const resp = await User.findOne({where : {email : email}})
+        if (resp) {
+           return ({succes : false , message : "E-mail já cadastrado"})
+        }
+    } else {
+       return ({succes : false , message : "Padrão incorreto de email"})
+    } 
+
+    return {succes : true , message : "Correto e disponivel"}
+}
+
 export const update = async (data: { id: any; nome: any; email: any; senha: any; data_criacao: any; }) => {
 
     await validate(data)

@@ -1,4 +1,4 @@
-import { create, deleteUser, getById, update, getByUsername, verifyEmail } from "../db/userDb"
+import { create, deleteUser, getById, update, getByUsername, verifyEmail, verifyUsername, verifySenha } from "../db/userDb"
 
 type resType = {
     status: (code: number) => any;
@@ -8,9 +8,9 @@ type resType = {
 export const postAsync = async (req: { body: any }, res: resType) => {
     try {
         const resp = await create(req.body)
-        return res.status(200).json(resp)
+        return res.status(200).json({success : true , dados : resp})
     } catch (error : any) {
-        return res.status(500).json({error : error.message})
+        return res.status(500).json({success : false , error : error.message})
     } 
 }
 
@@ -45,6 +45,26 @@ export const verifyEmailAsync = async (req: { body: {email : string} },  res: re
 
     try {
         const resp = await verifyEmail(req.body.email)
+        return res.status(200).json(resp)
+    } catch (error : any) {
+        return res.status(500).json({error : error.message})
+    }
+}
+
+export const verifyUsernameAsync = async (req: { body: {username : string} },  res: resType) => {
+
+    try {
+        const resp = await verifyUsername(req.body.username)
+        return res.status(200).json(resp)
+    } catch (error : any) {
+        return res.status(500).json({error : error.message})
+    }
+}
+
+export const verifyPassword = async (req: { body: {password : string} },  res: resType) => {
+
+    try {
+        const resp = await verifySenha(req.body.password)
         return res.status(200).json(resp)
     } catch (error : any) {
         return res.status(500).json({error : error.message})

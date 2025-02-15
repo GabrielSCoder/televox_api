@@ -1,5 +1,6 @@
 import { where } from "sequelize";
 import { usuarioAnyDTO, usuarioDTO, usuarioForm } from "../types/usuarioT";
+import { reservedWords } from "../utils/reservedString";
 
 const { User } = require("../models");
 
@@ -17,6 +18,8 @@ const validate = async (data: any) => {
     } else {
 
         const exists = await User.findOne({ where: { email: data.email } })
+
+        console.log(exists)
 
         if (exists) {
             erros.push("Email já cadastrado")
@@ -50,7 +53,7 @@ const convertToDTO = async (data: usuarioForm) => {
         username: data.username,
         email: data.email,
         genero: data.genero,
-        img_url: data.img_url,
+        img_url: data.img_url ?? "",
         data_nascimento: data.data_nascimento,
         data_criacao: data.data_criacao,
         data_modificacao: data.data_modificacao
@@ -59,25 +62,24 @@ const convertToDTO = async (data: usuarioForm) => {
     return item
 }
 
-const convertToAnnymoDTO = async (data : usuarioDTO) => {
+const convertToAnnymoDTO = async (data: usuarioDTO) => {
 
-    var item : usuarioAnyDTO = {
-        id : data.id,
-        nome : data.nome,
-        username : data.username
+    var item: usuarioAnyDTO = {
+        id: data.id,
+        nome: data.nome,
+        username: data.username
     }
 
     return item
 }
 
-export const create = async (data: { nome: any; email: any; password: any; username: string }) => {
+export const create = async (data: usuarioForm) => {
 
-    console.log(data)
     await validate(data)
 
-    const user = await User.create({ ...data, data_criacao: Date.now(), data_nascimento: Date.now() });
+    const user = await User.create({ ...data, data_criacao: Date.now() });
 
-    return user
+    return user.id
 }
 
 export const getById = async (id: any) => {
@@ -100,22 +102,59 @@ export const getByUsername = async (username: string) => {
     return await convertToDTO(resp)
 }
 
-export const verifyEmail = async (email : string) => {
+export const verifyEmail = async (email: string) => {
 
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
-    if (!email || email && typeof(email) != "string") {
-       return ({succes : false , message : "E-mail obrigatório"})
-    } else if (email.match(emailPattern)) {
-        const resp = await User.findOne({where : {email : email}})
+    if (!email || email && typeof (email) != "string") {
+        return ({ succes: false, message: "E-mail obrigatório" })
+    } else if (email.match(emailPattern) && email.length < 256) {
+        const resp = await User.findOne({ where: { email: email } })
         if (resp) {
-           return ({succes : false , message : "E-mail já cadastrado"})
+            return ({ succes: false, message: "E-mail já cadastrado" })
         }
     } else {
-       return ({succes : false , message : "Padrão incorreto de email"})
-    } 
+        return ({ succes: false, message: "Padrão incorreto de email" })
+    }
 
-    return {succes : true , message : "Correto e disponivel"}
+    return { succes: true, message: "Correto e disponivel" }
+}
+
+export const verifyUsername = async (username: string) => {
+
+    if (!username || username && typeof (username) == "number" || username.includes(reservedWords)) {
+        return ({ success: false, message: "username inválido" })
+
+    } else if (username.length > 2 && username.length < 51) {
+
+        const resp = await User.findOne({ where: { username: username } })
+
+        if (resp) {
+            return ({ success: false, message: "username em uso" })
+        }
+
+    } else {
+        return ({ success: false, message: "tamanho de username inválido" })
+    }
+
+    return { succes: true, message: "Correto e disponivel" }
+}
+
+export const verifySenha = async (password: string) => {
+
+    if (password && typeof (password) == "string") {
+        if (password.length > 8) {
+            if (password.length < 30) {
+                return ({ success: true, message: "correto" })
+            } else {
+                return ({ success: false, message: "tamanho de senha excedido" })
+            }
+        } else {
+            return ({ success: false, message: "tamanho da senha é insuficiente" })
+        }
+    } else {
+        return ({ success: false, message: "senha inválida" })
+    }
 }
 
 export const update = async (data: { id: any; nome: any; email: any; senha: any; data_criacao: any; }) => {

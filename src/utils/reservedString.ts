@@ -1,0 +1,1 @@
+export const reservedWords = "perfil home configuracao configuracoes grupos amigos friends"

@@ -1,51 +1,18 @@
 import jwt from "jsonwebtoken";
-import { generateTokens } from "../services/authConfig";
 import dotenv from "dotenv"
+import { getById } from "../db/userDb";
 const db = require("../models");
-const User = db.User;
+const User = db.Usuario;
 
 dotenv.config()
 
-const ACCESS_SECRET = process.env.ACCESS_SECRET || "access_secret";
-const REFRESH_SECRET = process.env.REFRESH_SECRET || "refresh_secret";
+export const generateTokens = (user: { id: any; }) => {
+    const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_SECRET as string, { expiresIn: "15s" });
+    const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET as string, { expiresIn: "2min" });
 
-export const login = async (req: { body: { email?: any; senha?: any } }, res: any) => {
+    return { accessToken, refreshToken };
+};
 
-    try {
-        const { email, senha } = req.body
-        const erros: Object[] = []
-
-        if (!email) {
-            erros.push({ campo: "email", menssagem: "Email obrigatório" })
-        }
-
-        if (!senha) {
-            erros.push({ campo: "senha", menssagem: "senha obrigatória" })
-        }
-
-        if (erros.length > 0) {
-            return res.status(401).json(erros)
-        }
-
-        const u = await User.findOne({ where: { email } })
-
-        // if (!u) {
-        //     return res.status(401).json({ error: "Email não encontrado!" })
-        // }
-
-        if (!u || !u.check(senha)) {
-            return res.status(401).json([{ menssagem: "Email e/ou senha incorreta!" }])
-        }
-
-        const sign = jwt.sign({ id: u.id }, "aquelasenhaDaHorinha", { expiresIn: "8h" })
-
-        return res.status(200).json({ message: "Login realizado!", sign })
-
-    } catch (error) {
-        return res.status(500).json({ error: "Erro interno" })
-    }
-
-}
 
 export const login2 = async (req: any, res: any) => {
 
@@ -78,14 +45,14 @@ export const login2 = async (req: any, res: any) => {
         secure: false,
         sameSite: "Strict",
         domain: "localhost",
-        path: "/auth/refresh",
-        maxAge: 7 * 24 * 60 * 60 * 1000
+        path: "/auth"
     });
 
     return res.status(200).json({ usuario_id: user.id, message: "Login realizado!", token: accessToken })
 };
 
-export const checkLogin = (req: any, res: any) => {
+//checa o token de acesso e retorna o Id do usuario
+export const checkLogin = async (req: any, res: any) => {
 
     try {
         const accessToken = req.headers['authorization'];
@@ -103,12 +70,16 @@ export const checkLogin = (req: any, res: any) => {
             return res.status(401).json({ error: "Token inválido" });
         }
 
-        return res.json({ success: true, dados: { id: decoded.id } });
+        const user = await getById(decoded.id)
+
+        return res.json({ success: true, user });
+
     } catch (error) {
         return res.status(401).json({ success: false, error: "Token inválido ou expirado" });
     }
 };
 
+//limpa o token refresh
 export const logout = (req: any, res: any) => {
     try {
         res.cookie("refreshToken", "", {
@@ -116,7 +87,7 @@ export const logout = (req: any, res: any) => {
             secure: false,
             sameSite: "Strict",
             domain: "localhost",
-            path: "/auth/refresh",
+            path: "/auth",
             expire: new Date(0)
         })
 
@@ -126,3 +97,86 @@ export const logout = (req: any, res: any) => {
         return res.status(500).json({ success : false, message : error})
     }
 }
+
+
+//verifica se o token refresh é valido e gera outro conjunto access/refresh
+export const refreshToken = async (req: any, res: any) => {
+
+    const token = req.cookies.refreshToken;
+    if (!token) return res.status(401).json({ success: false, error: "Sem refresh token" });
+
+    jwt.verify(token, process.env.REFRESH_SECRET as string, (err: any, user: any) => {
+
+        if (err) return res.status(403).json({ success: false, error: "Refresh token inválido" });
+
+        const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
+
+        res.cookie("refreshToken", newRefreshToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "Strict",
+            path: "/auth"
+        });
+
+        res.json({ success: true, token: accessToken });
+    });
+};
+
+
+//concede um novo codigo de acesso
+export const newAccessToken = async (req: any, res: any) => {
+
+    const token = req.cookies.refreshToken;
+
+    if (!token) return res.status(401).json({ success: false, error: "Sem refresh token" });
+
+    try {
+
+        const decoded = jwt.verify(token, process.env.REFRESH_SECRET as string);
+
+        if (typeof decoded !== "object" || !decoded.id) {
+            return res.status(401).json({ error: "Refresh token expirado ou inválido" });
+        }
+    
+        const accessToken = jwt.sign({ id: decoded.id },  process.env.ACCESS_SECRET as string, { expiresIn: "15s" });
+    
+        res.json({ success: true, token: accessToken });
+
+    } catch (error) {
+
+        if (error instanceof jwt.TokenExpiredError) {
+            return res.status(401).json({ error: "Refresh token expirado" });
+        }
+        return res.status(401).json({ error: "Erro ao validar o refresh token" });
+    }
+
+  
+
+};
+
+//verifica o token de acesso e permite a requisição
+export const authenticate = (req: any, res: any, next: any) => {
+
+    const authHeader = req.headers['authorization'];
+
+    if (!authHeader) {
+        return res.status(401).json({ error: "Token ausente" });
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ error: "Token inválido" });
+    }
+
+
+    jwt.verify(token,  process.env.ACCESS_SECRET as string, (err: any, user: any) => {
+        if (err) {
+            return res.status(403).json({ error: "Token inválido ou expirado" });
+        }
+
+        req.user = user;
+        next();
+    });
+};
+

@@ -4,6 +4,7 @@ import postRouter from "./routes/postRoute";
 import cors from "cors"
 import cookieParser from "cookie-parser"
 import authRouter from "./routes/authRoute";
+import feedRouter from "./routes/feedRoute";
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(cors({
 
 app.use("/auth", authRouter);
 app.use("/usuario", userRouter);
-app.use("/post", postRouter);      
+app.use("/post", postRouter);
+app.use("/feed", feedRouter)
 
 app.listen(3003, () => console.log("Servidor rodando na porta 3003"));

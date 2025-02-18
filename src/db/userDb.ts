@@ -2,7 +2,7 @@ import { where } from "sequelize";
 import { usuarioAnyDTO, usuarioDTO, usuarioForm } from "../types/usuarioT";
 import { reservedWords } from "../utils/reservedString";
 
-const { User } = require("../models");
+const { Usuario } = require("../models");
 
 const validate = async (data: any) => {
 
@@ -17,7 +17,7 @@ const validate = async (data: any) => {
 
     } else {
 
-        const exists = await User.findOne({ where: { email: data.email } })
+        const exists = await Usuario.findOne({ where: { email: data.email } })
 
         console.log(exists)
 
@@ -31,7 +31,7 @@ const validate = async (data: any) => {
         erros.push("Nome de usuário obrigatório")
 
     } else {
-        const userExists = await User.findOne({ where: { username: data.username } })
+        const userExists = await Usuario.findOne({ where: { username: data.username } })
 
         if (userExists) {
             erros.push("Nome de usuário já utilizado")
@@ -77,14 +77,14 @@ export const create = async (data: usuarioForm) => {
 
     await validate(data)
 
-    const user = await User.create({ ...data, data_criacao: Date.now() });
+    const user = await Usuario.create({ ...data, data_criacao: Date.now() });
 
     return user.id
 }
 
 export const getById = async (id: any) => {
 
-    const resp = await User.findByPk(id)
+    const resp = await Usuario.findByPk(id)
 
     if (!resp) throw new Error("Usuario não encontrado")
 
@@ -95,7 +95,7 @@ export const getByUsername = async (username: string) => {
 
     console.log("username", username)
 
-    const resp = await User.findOne({ where: { username: username } })
+    const resp = await Usuario.findOne({ where: { username: username } })
 
     if (!resp) throw new Error("Username não encontrado")
 
@@ -109,7 +109,7 @@ export const verifyEmail = async (email: string) => {
     if (!email || email && typeof (email) != "string") {
         return ({ succes: false, message: "E-mail obrigatório" })
     } else if (email.match(emailPattern) && email.length < 256) {
-        const resp = await User.findOne({ where: { email: email } })
+        const resp = await Usuario.findOne({ where: { email: email } })
         if (resp) {
             return ({ succes: false, message: "E-mail já cadastrado" })
         }
@@ -127,7 +127,7 @@ export const verifyUsername = async (username: string) => {
 
     } else if (username.length > 2 && username.length < 51) {
 
-        const resp = await User.findOne({ where: { username: username } })
+        const resp = await Usuario.findOne({ where: { username: username } })
 
         if (resp) {
             return ({ success: false, message: "username em uso" })
@@ -162,7 +162,7 @@ export const update = async (data: { id: any; nome: any; email: any; senha: any;
     await validate(data)
     await getById(data.id)
 
-    const res = await User.update(
+    const res = await Usuario.update(
         {
             nome: data.nome,
             email: data.email,
@@ -182,7 +182,7 @@ export const deleteUser = async (id: any) => {
 
     await getById(id)
 
-    const resp = await User.destroy({ where: { id: id } })
+    const resp = await Usuario.destroy({ where: { id: id } })
 
     return resp
 }

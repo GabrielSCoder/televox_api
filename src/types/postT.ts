@@ -31,6 +31,12 @@ export type postFilterDTO = {
     numeroPagina : number
 }
 
+export type feedFilterDTO = {
+    id : string | number
+    tamanhoPagina : number
+    numeroPagina : number
+}
+
 export type responsePostFilterDTO = {
     pagina : number
     numeroPaginas : number

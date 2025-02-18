@@ -1,6 +1,6 @@
 import express from "express";
 import { postAsync, deleteAsync, getAsync, updateAsync, getUsernameAsync, verifyEmailAsync, verifyUsernameAsync, verifyPassword } from "../controllers/userController";
-import { authenticate } from "../services/authConfig";
+import { authenticate } from "../controllers/authController";
 
 const userRouter = express.Router();
 

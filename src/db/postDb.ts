@@ -1,7 +1,7 @@
 import { where } from "sequelize"
-import { postDTO, postFilterDTO, postForm, postListDTO, responsePostFilterDTO } from "../types/postT"
+import { feedFilterDTO, postDTO, postFilterDTO, postForm, postListDTO, responsePostFilterDTO } from "../types/postT"
 
-const { Post, User } = require("../models")
+const { Post, Usuario } = require("../models")
 
 
 const validate = async (data: any) => {
@@ -16,7 +16,7 @@ const validate = async (data: any) => {
         erros.push("Conteudo obrigatório")
 
     } else {
-        const exists = await User.findOne({ where: { id: data.usuario_id } })
+        const exists = await Usuario.findOne({ where: { id: data.usuario_id } })
 
         if (!exists) {
             erros.push("Usuario não existe")
@@ -105,10 +105,17 @@ export const getPostsByFilter = async (filter: postFilterDTO) => {
     var list
 
     if (filter.usuario && typeof (filter.usuario) == "string") {
-        const user = await User.findOne({ where: { username: filter.usuario } })
+        const user = await Usuario.findOne({ where: { username: filter.usuario } })
         console.log(filter.usuario)
         if (user) {
-            resp = await Post.findAll({ where: { usuario_id: user.id } })
+            resp = await Post.findAll({
+                where: { usuario_id: user.id },
+                include: [{
+                    model: Usuario,
+                    as: "usuario",
+                    attributes: ["nome", "username", "img_url", "data_criacao"]
+                }]
+            })
         } else {
             throw new Error("Usuario não encontrado")
         }
@@ -137,4 +144,51 @@ export const getPostsByFilter = async (filter: postFilterDTO) => {
     }
 
     return item
+}
+
+
+
+export const feedMk1 = async (filter: feedFilterDTO) => {
+    var resp
+    var list = []
+
+
+
+    if (filter.id && filter.tamanhoPagina) {
+        const user = await Usuario.findByPk(filter.id)
+        if (!user) {
+            throw new Error("Usuario não encontrado")
+        }
+
+        const posts = await Post.findAll({
+            include: [
+                {
+                    model: Usuario,
+                    as: "usuario",
+                    attributes: ["nome", "username", "img_url", "data_criacao"]
+                }
+            ]
+        })
+
+        const newRandN = () => Math.floor(Math.random() * posts.length)
+
+        var previosRand: number[] = []
+
+        for (let i = 0; i < filter.tamanhoPagina; i++) {
+
+            var n = newRandN()
+
+            while (previosRand.includes(n)) {
+                n = newRandN()
+            }
+
+            list.push(posts[n])
+            previosRand.push(n)
+        }
+
+        return list
+
+    }
+
+    throw new Error("informação de usuario obrigatória")
 }

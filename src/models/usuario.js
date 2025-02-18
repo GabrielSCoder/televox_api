@@ -2,21 +2,21 @@
 const {Model} = require('sequelize');
 const bcrypt = require("bcrypt")
 module.exports = (sequelize, DataTypes) => {
-  class usuario extends Model {
+  class Usuario extends Model {
 
     check(password) {
       return bcrypt.compareSync(password, this.senha);
     }
 
     static associate(models) {
-      usuario.hasMany(models.post, {
+      Usuario.hasMany(models.Post, {
         foreignKey : 'usuario_id',
         as : 'posts'
       })
     }
   }
   
-  usuario.init({
+  Usuario.init({
     nome: DataTypes.STRING,
     email: DataTypes.STRING,
     username : DataTypes.STRING,
@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
     data_edicao : DataTypes.DATE
   }, {
     sequelize,
-    modelName: 'usuario',
+    modelName: 'Usuario',
     tableName: 'usuario',
     timestamps: false,
     hooks: {
@@ -44,5 +44,5 @@ module.exports = (sequelize, DataTypes) => {
       }
     }
   },);
-  return usuario;
+  return Usuario;
 };

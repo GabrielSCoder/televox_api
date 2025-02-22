@@ -1,26 +1,20 @@
 import express from "express";
-import userRouter from "./routes/userRoute";
-import postRouter from "./routes/postRoute";
 import cors from "cors"
 import cookieParser from "cookie-parser"
-import authRouter from "./routes/authRoute";
-import feedRouter from "./routes/feedRoute";
+import { corsConfig, ServerPort } from "./utils/serverConfig";
+import mainRouter from "./routes/mainRoute";
+import { createServer } from "http";
+import socketConfiguration from "./utils/socketConfig";
 
 const app = express();
+const server = createServer(app)
 
 app.use(express.json());
 app.use(cookieParser())
+app.use(cors({...corsConfig}))
 
-app.use(cors({
-    origin: "http://localhost:5173", 
-    methods: ["GET", "POST", "PUT", "DELETE"], 
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials : true
-}));
+socketConfiguration(server)
 
-app.use("/auth", authRouter);
-app.use("/usuario", userRouter);
-app.use("/post", postRouter);
-app.use("/feed", feedRouter)
+app.use(mainRouter)
 
-app.listen(3003, () => console.log("Servidor rodando na porta 3003"));
+server.listen(ServerPort, () => console.log("Servidor rodando na porta 3003"));

@@ -4,13 +4,14 @@ import { authenticate } from "../controllers/authController";
 
 const userRouter = express.Router();
 
-userRouter.post("/", postAsync);   
-userRouter.get("/:id", authenticate, getAsync);
-userRouter.get("/find/:username", getUsernameAsync);
-userRouter.post("/verify/email", verifyEmailAsync);
-userRouter.post("/verify/username", verifyUsernameAsync);
-userRouter.post("/verify/password", verifyPassword);
 userRouter.put("/", authenticate, updateAsync);  
+userRouter.get("/:id", authenticate, getAsync);
 userRouter.delete("/:id", authenticate, deleteAsync);
+userRouter.post("/verify/email", authenticate ,verifyEmailAsync);
+
+userRouter.post("/", postAsync);   
+userRouter.post("/verify/password", verifyPassword);
+userRouter.get("/find/:username", getUsernameAsync);
+userRouter.post("/verify/username", verifyUsernameAsync);
 
 export default userRouter;

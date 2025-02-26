@@ -16,12 +16,17 @@ module.exports = (sequelize, DataTypes) => {
 
       Usuario.hasMany(models.Seguidor, {
         foreignKey : 'follower_id',
-        as : 'seguidores'
+        as : 'seguindo'
       })
 
       Usuario.hasMany(models.Seguidor, {
         foreignKey : 'following_id',
-        as : 'seguidor'
+        as : 'seguidores'
+      })
+
+      Usuario.hasMany(models.Sessao, {
+        foreignKey : "usuario_id",
+        as : "sessoes"
       })
     }
   }

@@ -17,26 +17,26 @@ export default function socketConfiguration (server : HttpServer) {
 
 
         socket.on("follow", async (data : followForm) => {
+            console.log('testando ------------------------------')
             const resp = await follow(data)
             if (resp) {
                 const total = await getTotalizer(data.following_id)
                 console.log(total)
-                io.emit("followResponse", total)
+                io.emit("followResponse", {total : total, dados : data})
             }
         })
 
         socket.on("unfollow", async (data : followForm) => {
-            
             const resp = await unfollow(data)
             if (resp) {
                 const total = await getTotalizer(data.following_id)
-                io.emit("unfollowResponse", total)
+                io.emit("unfollowResponse", {total : total, dados : data})
             }
         })
 
         socket.on("disconnect", () => {
             console.log("Usuário desconectado: ", socket.id)
-            console.log("Usuários conectados: y", io.engine.clientsCount);
+            console.log("Usuários conectados: ", io.engine.clientsCount);
             const update = Array.from(io.sockets.sockets.keys())
             console.log("xxxx : \n", update)
         })

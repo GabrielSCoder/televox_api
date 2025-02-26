@@ -99,6 +99,21 @@ export const getAllPostByIdUser = async (id: number) => {
     throw new Error("Error interno")
 }
 
+export const getAllPostByUsername = async (id: number) => {
+
+    const resp = await Post.findAll({ where: { usuario_id: id } })
+
+    if (resp.length > 0) {
+        const pageItem: postListDTO = {
+            quantidade_postagens: resp.length,
+            listaPostagens: resp
+        }
+        return pageItem
+    }
+
+    throw new Error("Error interno")
+}
+
 export const getPostsByFilter = async (filter: postFilterDTO) => {
 
     var resp

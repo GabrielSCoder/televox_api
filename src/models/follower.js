@@ -8,12 +8,12 @@ module.exports = (sequelize, DataTypes) => {
         static associate(models) {
             Follower.belongsTo(models.Usuario, {
                 foreignKey: 'follower_id',
-                as: 'usuario'
+                as: 'usuario_seguidor'
             })
 
             Follower.belongsTo(models.Usuario, {
                 foreignKey: 'following_id',
-                as: 'usuarios'
+                as: 'usuario_seguidores'
             })
             
         }

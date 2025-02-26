@@ -107,7 +107,7 @@ export const refreshToken = async (req: any, res: any) => {
 
     jwt.verify(token, process.env.REFRESH_SECRET as string, (err: any, user: any) => {
 
-        if (err) return res.status(403).json({ success: false, error: "Refresh token inválido" });
+        if (err) return res.status(401).json({ success: false, error: "Refresh token inválido" });
 
         const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
 
@@ -172,7 +172,7 @@ export const authenticate = (req: any, res: any, next: any) => {
 
     jwt.verify(token,  process.env.ACCESS_SECRET as string, (err: any, user: any) => {
         if (err) {
-            return res.status(403).json({ error: "Token inválido ou expirado" });
+            return res.status(401).json({ error: "Token inválido ou expirado" });
         }
 
         req.user = user;

@@ -28,6 +28,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey : "usuario_id",
         as : "sessoes"
       })
+
+      Usuario.hasMany(models.PostReaction, {
+        foreignKey : "usuario_id",
+        as : "reacoes"
+      })
     }
   }
   

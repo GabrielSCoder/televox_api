@@ -24,7 +24,7 @@ export const follow = async (data: followForm) => {
 
     const checkFollow = await Seguidor.findOne({ where: { follower_id: data.follower_id, following_id: data.following_id } })
 
-    if (checkFollow) throw new Error("Usuario já é seguidor")
+    if (checkFollow) throw new Error(`Usuario ${data.follower_id} já é seguidor do usuario ${data.following_id}`)
     const rel = await Seguidor.create({ ...data, followedAt: Date.now() })
 
     return rel.id

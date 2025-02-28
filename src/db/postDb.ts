@@ -1,7 +1,8 @@
-import { where } from "sequelize"
-import { feedFilterDTO, postDTO, postFilterDTO, postForm, postListDTO, responsePostFilterDTO } from "../types/postT"
+import { Sequelize, where } from "sequelize"
+import { feedFilterDTO, postDTO, postFilterDTO, postForm, postListDTO, reactPostForm, responsePostFilterDTO } from "../types/postT"
+import { error } from "console"
 
-const { Post, Usuario } = require("../models")
+const { Post, Usuario, PostReaction } = require("../models")
 
 
 const validate = async (data: any) => {
@@ -33,12 +34,8 @@ const convertToDTO = async (data: postForm) => {
         conteudo: data.conteudo,
         tipo: data.tipo,
         usuario_id: data.usuario_id,
-        reacao_gostei: data.reacao_gostei,
-        reacao_nao_gostei: data.reacao_nao_gostei,
-        qtd_comentarios: data.qtd_comentarios,
         data_criacao: data.data_criacao,
-        data_modificacao: data.data_modificacao,
-        qt_compartilhamentos: data.qt_compartilhamentos
+        data_modificacao: data.data_modificacao
     }
 
     return item
@@ -161,6 +158,101 @@ export const getPostsByFilter = async (filter: postFilterDTO) => {
     return item
 }
 
+
+export const ReactToPost = async (data: reactPostForm) => {
+
+
+    if (data && data.post_id && data.usuario_id) {
+
+        console.log("aqui")
+
+        const checkPost = await Post.findByPk(data.post_id)
+        const checkUser = await Usuario.findByPk(data.usuario_id)
+
+        if (checkPost && checkUser) {
+            const checkReact = await PostReaction.findOne({ where: { post_id: data.post_id, usuario_id: data.usuario_id } })
+
+            if (!checkReact) {
+                const create = await PostReaction.create({ ...data, data_criacao: Date.now() })
+
+                if (create) return {liked : true}
+
+                throw new Error("erro interno")
+
+            } else {
+
+                const destroy = await PostReaction.destroy({ where: { id: checkReact.id } })
+
+                if (destroy) return {liked : false}
+
+                throw new Error("erro interno")
+            }
+
+        } else {
+            throw new Error("Erro na busca do usuário ou da postagem")
+        }
+    } else {
+        throw new Error("Dados obrigatórios")
+    }
+}
+
+export const getPostReactions = async (id: number) => {
+    const reactions = await PostReaction.findOne({
+        where: { post_id: id },
+        attributes: [
+            [Sequelize.fn('COUNT', Sequelize.col('post_id')), 'total_reactions']
+        ]
+    })
+    return reactions
+}
+
+export const getUserPostsWithReactions = async (data: { authorId: number, userId: number }) => {
+
+
+    if (data.authorId && data.userId) {
+        const posts = await Post.findAll({
+            where: { usuario_id: data.authorId },
+            attributes: [
+                'id',
+                'conteudo',
+                'data_criacao',
+                'data_modificao',
+                [
+                    Sequelize.literal(`
+                        (SELECT COUNT(*) FROM post_reaction WHERE post_reaction.post_id = "Post".id)
+                    `),
+                    'total_reactions'
+                ],
+                [
+                    Sequelize.literal(`
+                        EXISTS (
+                            SELECT 1 FROM post_reaction 
+                            WHERE post_reaction.post_id = "Post".id 
+                            AND post_reaction.usuario_id = ${data.userId}
+                        )
+                    `),
+                    'liked'
+                ]
+            ],
+            include: [
+                {
+                    model: Usuario,
+                    as: 'usuario',
+                    attributes: ['id', 'username', 'img_url']
+                }
+            ],
+            order: [['data_criacao', 'DESC']]
+        });
+
+        return {
+            quantidade_postagens: posts.length,
+            listaPostagens: posts
+        };
+    } else {
+        throw new Error("Dados obrigatórios")
+    }
+
+};
 
 
 export const feedMk1 = async (filter: feedFilterDTO) => {

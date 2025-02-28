@@ -1,4 +1,4 @@
-import { create, deletePost, editPost, getAllPostByIdUser, getById, getPostsByFilter } from "../db/postDb"
+import { create, deletePost, editPost, getAllPostByIdUser, getById, getPostsByFilter, ReactToPost, getPostReactions, getUserPostsWithReactions } from "../db/postDb"
 
 type resType = {
     status: (code: number) => any;
@@ -8,6 +8,24 @@ type resType = {
 export const postAsync = async (req: { body: any }, res: resType) => {
     try {
         const resp = await create(req.body)
+        return res.status(200).json({success : true, dados : resp})
+    } catch (error : any) {
+        return res.status(500).json({success : false, error : error.message})
+    } 
+}
+
+export const reactPostAsync = async (req: { body: any }, res: resType) => {
+    try {
+        const resp = await ReactToPost(req.body)
+        return res.status(200).json({success : true, dados : resp})
+    } catch (error : any) {
+        return res.status(500).json({success : false, error : error.message})
+    } 
+}
+
+export const listWithReactions = async (req: { body: any } , res: resType) => {
+    try {
+        const resp = await getUserPostsWithReactions(req.body)
         return res.status(200).json({success : true, dados : resp})
     } catch (error : any) {
         return res.status(500).json({success : false, error : error.message})
@@ -53,6 +71,15 @@ export const getAllByUserAsync = async (req: { params: {id : number} },  res: re
 export const getByFilterAsync = async (req: { body : any },  res: resType) => {
     try {
         const resp = await getPostsByFilter(req.body)
+        return res.status(200).json({success : true, dados : resp})
+    } catch (error : any) {
+        return res.status(500).json({success : false, error : error.message})
+    }
+}
+
+export const getPostReactionsTotal = async (req: { params : {id : number} },  res: resType) => {
+    try {
+        const resp = await getPostReactions(req.params.id)
         return res.status(200).json({success : true, dados : resp})
     } catch (error : any) {
         return res.status(500).json({success : false, error : error.message})

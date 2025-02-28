@@ -7,7 +7,7 @@ const User = db.Usuario;
 dotenv.config()
 
 export const generateTokens = (user: { id: any; }) => {
-    const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_SECRET as string, { expiresIn: "30min" });
+    const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_SECRET as string, { expiresIn: "2hr" });
     const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET as string, { expiresIn: "1d" });
 
     return { accessToken, refreshToken };

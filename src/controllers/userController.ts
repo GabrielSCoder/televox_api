@@ -1,4 +1,4 @@
-import { create, deleteUser, getById, update, getByUsername, verifyEmail, verifyUsername, verifySenha } from "../db/userDb"
+import { create, deleteUser, getById, update, getByUsername, verifyEmail, verifyUsername, verifySenha, getUsersByFilter } from "../db/userDb"
 
 type resType = {
     status: (code: number) => any;
@@ -79,3 +79,14 @@ export const getUsernameAsync = async (req : {params : {username : string}}, res
         return res.status(404).json({success : false, error : error.message})
     }
 }
+
+
+export const getUsersByFilterAsync = async (req : {body : any}, res : resType) => {
+    try {
+        const resp = await getUsersByFilter(req.body)
+        return res.status(200).json({success : true, dados : resp})
+    } catch (error : any) {
+        return res.status(404).json({success : false, error : error.message})
+    }
+}
+

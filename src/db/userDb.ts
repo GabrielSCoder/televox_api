@@ -1,5 +1,5 @@
-import { where } from "sequelize";
-import { usuarioAnyDTO, usuarioDTO, usuarioForm } from "../types/usuarioT";
+import { where, Op, Sequelize } from "sequelize";
+import { usuarioAnyDTO, usuarioDTO, usuarioFilterDTO, usuarioForm } from "../types/usuarioT";
 import { reservedWords } from "../utils/reservedString";
 
 const { Usuario } = require("../models");
@@ -185,4 +185,32 @@ export const deleteUser = async (id: any) => {
     const resp = await Usuario.destroy({ where: { id: id } })
 
     return resp
+}
+
+export const getUsersByFilter = async (data: usuarioFilterDTO) => {
+
+    if (!data.pagina || !data.tamanhoPagina) {
+        throw new Error("Dados de paginação obrigatórios")
+    }
+
+    const users = await Usuario.findAll(
+        {
+            where: {
+                [Op.or]: [
+                    { nome: { [Op.iLike]: `%${data.search}%` } },
+                    { username: { [Op.iLike]: `%${data.search}%` } }
+                ]
+            },
+            attributes : ["id", "nome", "username", "img_url", [
+                Sequelize.literal(`(Select count(*) From seguidor where following_id = "Usuario".id)`), "seguidores"
+            ]],
+            limit : data.tamanhoPagina,
+            offset : (data.pagina - 1) * data.tamanhoPagina,
+            order : [[Sequelize.literal("seguidores"), "DESC"]]
+        },
+        
+    )
+
+    return users
+
 }

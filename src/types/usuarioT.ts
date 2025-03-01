@@ -24,3 +24,10 @@ export type usuarioAnyDTO = {
     nome : string
     username : string
 }
+
+export type usuarioFilterDTO = {
+    search : string
+    tamanhoPagina : number
+    pagina : number
+    filtro : string
+}

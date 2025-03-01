@@ -1,5 +1,5 @@
 import express from "express";
-import { postAsync, deleteAsync, getAsync, updateAsync, getUsernameAsync, verifyEmailAsync, verifyUsernameAsync, verifyPassword } from "../controllers/userController";
+import { postAsync, deleteAsync, getAsync, updateAsync, getUsernameAsync, verifyEmailAsync, verifyUsernameAsync, verifyPassword, getUsersByFilterAsync } from "../controllers/userController";
 import { authenticate } from "../controllers/authController";
 
 const userRouter = express.Router();
@@ -13,5 +13,6 @@ userRouter.post("/", postAsync);
 userRouter.post("/verify/password", verifyPassword);
 userRouter.get("/find/:username", getUsernameAsync);
 userRouter.post("/verify/username", verifyUsernameAsync);
+userRouter.post("/getByfilter", getUsersByFilterAsync);
 
 export default userRouter;

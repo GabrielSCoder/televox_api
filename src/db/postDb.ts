@@ -299,3 +299,49 @@ export const feedMk1 = async (filter: feedFilterDTO) => {
 
     throw new Error("informação de usuario obrigatória")
 }
+
+export const feedMk2 = async (filter: feedFilterDTO) => {
+    if (!filter.tamanhoPagina) {
+        throw new Error("Tamanho da página obrigatório");
+    }
+
+    // Busca todos os posts com informações do usuário
+    const posts = await Post.findAll({
+        attributes: [
+            "id",
+            "conteudo",
+            "usuario_id",
+            "data_criacao",
+            [
+                Sequelize.literal(`(
+                    SELECT COUNT(*) FROM post_reaction 
+                    WHERE post_reaction.post_id = "Post".id
+                )`),
+                "total_reactions"
+            ],
+            filter.id
+                ? [
+                      Sequelize.literal(`(
+                          SELECT EXISTS (
+                              SELECT 1 FROM post_reaction 
+                              WHERE post_reaction.post_id = "Post".id 
+                              AND post_reaction.usuario_id = ${filter.id}
+                          )
+                      )`),
+                      "liked"
+                  ]
+                : []
+        ].filter(Boolean), // Remove elementos vazios
+        include: [
+            {
+                model: Usuario,
+                as: "usuario",
+                attributes: ["nome", "username", "img_url", "data_criacao"]
+            }
+        ],
+        order: Sequelize.literal("random()"), // Retorna aleatoriamente
+        limit: filter.tamanhoPagina
+    });
+
+    return posts;
+};

@@ -17,9 +17,20 @@ module.exports = (sequelize, DataTypes) => {
         as : "reactions"
       })
 
+      Post.belongsTo(models.Post, {
+        foreignKey : "parent_id",
+        as : "parents"
+      })
+
+      Post.hasMany(models.Post, {
+        foreignKey : "parent_id",
+        as : "replies"
+      })
+
     }
   }
   Post.init({
+    parent_id : DataTypes.INTEGER,
     tipo: DataTypes.STRING,
     conteudo: DataTypes.TEXT,
     usuario_id: DataTypes.INTEGER,

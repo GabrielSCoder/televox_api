@@ -1,4 +1,4 @@
-import { create, deletePost, editPost, getAllPostByIdUser, getById, getPostsByFilter, ReactToPost, getPostReactions, getUserPostsWithReactions } from "../db/postDb"
+import { create, deletePost, editPost, getAllPostByIdUser, getById, getPostsByFilter, ReactToPost, getPostReactions, getUserPostsWithReactions, getRepliesByPostId } from "../db/postDb"
 
 type resType = {
     status: (code: number) => any;
@@ -35,27 +35,27 @@ export const listWithReactions = async (req: { body: any } , res: resType) => {
 export const updateAsync = async (req: { body: any }, res: resType) => {
     try {
         const resp = await editPost(req.body)
-        return res.status(200).json(resp)
+        return res.status(200).json({success : true, dados : resp})
     } catch (error : any) {
-        return res.status(500).json({error : error.message})
+        return res.status(500).json({success : false, error : error.message})
     }
 }
 
 export const deleteAsync = async (req: { params: {id : number} }, res: resType) => {
     try {
         const resp = await deletePost(req.params.id)
-        return res.status(200).json(resp)
+        return res.status(200).json({success : true, dados : resp})
     } catch (error : any) {
-        return res.status(500).json({error : error.message})
+        return res.status(500).json({success : false, error : error.message})
     }   
 }
 
-export const getAsync = async (req: { params: {id : number} },  res: resType) => {
+export const getAsync = async (req: { body : any },  res: resType) => {
     try {
-        const resp = await getById(req.params.id)
-        return res.status(200).json(resp)
+        const resp = await getById(req.body)
+        return res.status(200).json({success : true, dados : resp})
     } catch (error : any) {
-        return res.status(500).json({error : error.message})
+        return res.status(500).json({success : false, error : error.message})
     }
 }
 
@@ -80,6 +80,15 @@ export const getByFilterAsync = async (req: { body : any },  res: resType) => {
 export const getPostReactionsTotal = async (req: { params : {id : number} },  res: resType) => {
     try {
         const resp = await getPostReactions(req.params.id)
+        return res.status(200).json({success : true, dados : resp})
+    } catch (error : any) {
+        return res.status(500).json({success : false, error : error.message})
+    }
+}
+
+export const getReplies = async (req: { body : any },  res: resType) => {
+    try {
+        const resp = await getRepliesByPostId(req.body)
         return res.status(200).json({success : true, dados : resp})
     } catch (error : any) {
         return res.status(500).json({success : false, error : error.message})

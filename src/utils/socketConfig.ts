@@ -4,8 +4,8 @@ import { corsConfig } from "./serverConfig";
 import { followForm } from "../types/followT";
 import { follow, getTotalizer, unfollow, checkXFollowY } from "../db/followDb";
 import { reactPostAsync } from "../controllers/postController";
-import { getPostReactions, ReactToPost } from "../db/postDb";
-import { reactPostForm } from "../types/postT";
+import { create, getById, getPostReactions, getRepliesByPostId, ReactToPost } from "../db/postDb";
+import { postCreateDTO, reactPostForm } from "../types/postT";
 const { Seguidor, Usuario } = require("../models")
 
 
@@ -48,8 +48,25 @@ export default function socketConfiguration(server: HttpServer) {
             if (resp) {
                 const total = await getPostReactions(data.post_id)
                 if (total) {
-                    io.emit("reactResponse", {data : data, liked: resp, total : total})
+                    io.emit("reactResponse", { data: data, liked: resp, total: total })
                 }
+            }
+        })
+
+        socket.on("reply", async (data: postCreateDTO) => {
+            console.log("------------Reply--------------\n")
+
+            const resp = await create(data)
+            if (resp) {
+
+                const post = await getRepliesByPostId({
+                    id: resp.parent_id,
+                    profile_id: resp.usuario_id,
+                    tamanhoPagina: 0,
+                    numeroPagina: 1
+                })
+
+                io.emit("replyResponse", post)
             }
         })
 

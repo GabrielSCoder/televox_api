@@ -1,11 +1,11 @@
 import { Sequelize, where } from "sequelize"
-import { feedFilterDTO, postDTO, postFilterDTO, postForm, postListDTO, reactPostForm, responsePostFilterDTO } from "../types/postT"
+import { feedFilterDTO, getPostForm, postCreateDTO, postDTO, postFilterDTO, postForm, postListDTO, reactPostForm, replyFilterDtO, responsePostFilterDTO } from "../types/postT"
 import { error } from "console"
 
 const { Post, Usuario, PostReaction } = require("../models")
 
 
-const validate = async (data: any) => {
+const validate = async (data: postCreateDTO) => {
 
     var erros: string[] = []
 
@@ -24,6 +24,14 @@ const validate = async (data: any) => {
         }
     }
 
+    if (data.parent_id) {
+        const exists = await Post.findOne({ where: { id: data.parent_id } })
+
+        if (!exists) {
+            erros.push("Post não existe")
+        }
+    }
+
     if (erros.length > 0) throw new Error(erros.toString())
 }
 
@@ -35,24 +43,72 @@ const convertToDTO = async (data: postForm) => {
         tipo: data.tipo,
         usuario_id: data.usuario_id,
         data_criacao: data.data_criacao,
-        data_modificacao: data.data_modificacao
+        data_modificacao: data.data_modificacao,
+        total_reactions: data.total_reactions,
+        parent_id: data.parent_id
     }
 
     return item
 }
 
-export const getById = async (id: number) => {
+export const getById = async (data : getPostForm) => {
 
-    const resp = await Post.findOne({ where: { id: id } })
+    const likedLiteral = data.profile_id
+    ? [
+        [
+            Sequelize.literal(`(
+                SELECT EXISTS (
+                    SELECT 1 FROM post_reaction 
+                    WHERE post_reaction.post_id = "Post".id 
+                    AND post_reaction.usuario_id = ${data.profile_id}
+                )
+            )`),
+            "liked"
+        ]
+    ]
+    : [];
+
+    const resp = await Post.findOne({
+        where: { id : data.id },
+        include: [{ model: PostReaction, as: "reactions", attributes: [] }],
+        attributes: {
+            include: [
+                [
+                    Sequelize.cast(
+                        Sequelize.literal(`(
+                            SELECT COUNT(*) 
+                            FROM post 
+                            WHERE post.parent_id = "Post".id
+                        )`),
+                        "INTEGER"
+                    ),
+                    "total_replies"
+                ],
+                [
+                    Sequelize.cast(
+                        Sequelize.literal(`(
+                            SELECT COUNT(*) 
+                            FROM post_reaction 
+                            WHERE post_reaction.post_id = "Post".id
+                        )`),
+                        "INTEGER"
+                    ),
+                    "total_reactions"
+                ],
+                ...likedLiteral
+            ]
+        },
+        raw: true
+    });
 
     if (!resp) {
-        throw new Error("post não existe")
+        throw new Error("Post não existe");
     }
 
-    return await convertToDTO(resp)
-}
+    return await resp;
+};
 
-export const create = async (data: { tipo: string, conteudo: string, usuario_id: number }) => {
+export const create = async (data: postCreateDTO) => {
 
     await validate(data)
 
@@ -70,9 +126,9 @@ export const deletePost = async (id: number) => {
     }
 }
 
-export const editPost = async (data: { id: number }) => {
+export const editPost = async (data: postCreateDTO) => {
     await validate(data)
-    await getById(data.id)
+    const check = await Post.findByPk(data.id)
 
     const r = await Post.update(
         { ...data, data_modificacao: Date.now() }, { where: { id: data.id } }
@@ -82,7 +138,8 @@ export const editPost = async (data: { id: number }) => {
 }
 
 export const getAllPostByIdUser = async (id: number) => {
-    const resp = await Post.findAll({ where: { usuario_id: id } })
+
+    const resp = await Post.findAll({ where: { usuario_id: id, parent_id: null } })
 
     if (resp.length > 0) {
         const pageItem: postListDTO = {
@@ -158,6 +215,106 @@ export const getPostsByFilter = async (filter: postFilterDTO) => {
     return item
 }
 
+export const getRepliesByPostId = async (data: replyFilterDtO) => {
+    if (!data.id) {
+        throw new Error("Id obrigatório");
+    }
+
+    // Verifica se profile_id foi passado
+    const likedLiteral = data.profile_id
+        ? [
+            [
+                Sequelize.literal(`(
+                    SELECT EXISTS (
+                        SELECT 1 FROM post_reaction 
+                        WHERE post_reaction.post_id = "Post".id 
+                        AND post_reaction.usuario_id = ${data.profile_id}
+                    )
+                )`),
+                "liked"
+            ]
+        ]
+        : []; // Se não, deixa vazio
+
+    const resp = await Post.findAll({
+        where: { parent_id: data.id },
+        attributes: {
+            include: [
+                [
+                    Sequelize.cast(
+                        Sequelize.literal(
+                            `(SELECT COUNT(*) FROM post_reaction WHERE post_reaction.post_id = "Post".id)`
+                        ),
+                        "INTEGER"
+                    ),"total_reactions"
+                    
+                ],
+                ...likedLiteral // Inclui apenas se profile_id existir
+            ]
+        },
+        include: [
+            {
+                model: Usuario,
+                as: "usuario",
+                attributes: ["nome", "username", "img_url", "data_criacao"]
+            },
+            {
+                model: Post,
+                as: "replies",
+                attributes: {
+                    include: [
+                        [
+                            Sequelize.cast(
+                                Sequelize.literal(
+                                    `(SELECT COUNT(*) FROM post_reaction WHERE post_reaction.post_id = replies.id)`
+                                ),
+                                "INTEGER"
+                            ), "total_reactions"
+                            
+                        ],
+                        ...likedLiteral // Inclui apenas se profile_id existir
+                    ]
+                },
+                required: false,
+                include: [
+                    {
+                        model: Usuario,
+                        as: "usuario",
+                        attributes: ["nome", "username", "img_url", "data_criacao"]
+                    },
+                    {
+                        model: Post,
+                        as: "replies",
+                        attributes: {
+                            include: [
+                                [
+                                    Sequelize.cast(
+                                        Sequelize.literal(
+                                            `(SELECT COUNT(*) FROM post_reaction WHERE post_reaction.post_id = replies.id)`
+                                        ),
+                                       "INTEGER"
+                                    ),  "total_reactions"
+                                    
+                                ],
+                                ...likedLiteral // Inclui apenas se profile_id existir
+                            ]
+                        }
+                    }
+                ]
+            }
+        ],
+        order: [["data_criacao", "DESC"]]
+    });
+
+    if (!resp) {
+        throw new Error("Post não encontrado");
+    }
+
+    return resp;
+};
+
+
+
 
 export const ReactToPost = async (data: reactPostForm) => {
 
@@ -175,7 +332,7 @@ export const ReactToPost = async (data: reactPostForm) => {
             if (!checkReact) {
                 const create = await PostReaction.create({ ...data, data_criacao: Date.now() })
 
-                if (create) return {liked : true}
+                if (create) return { liked: true }
 
                 throw new Error("erro interno")
 
@@ -183,7 +340,7 @@ export const ReactToPost = async (data: reactPostForm) => {
 
                 const destroy = await PostReaction.destroy({ where: { id: checkReact.id } })
 
-                if (destroy) return {liked : false}
+                if (destroy) return { liked: false }
 
                 throw new Error("erro interno")
             }
@@ -211,17 +368,28 @@ export const getUserPostsWithReactions = async (data: { authorId: number, userId
 
     if (data.authorId && data.userId) {
         const posts = await Post.findAll({
-            where: { usuario_id: data.authorId },
+            where: { usuario_id: data.authorId, parent_id: null },
             attributes: [
                 'id',
                 'conteudo',
                 'data_criacao',
                 'data_modificao',
                 [
-                    Sequelize.literal(`
-                        (SELECT COUNT(*) FROM post_reaction WHERE post_reaction.post_id = "Post".id)
-                    `),
-                    'total_reactions'
+                    Sequelize.cast(
+                        Sequelize.literal(`
+                            (SELECT COUNT(*) FROM post_reaction WHERE post_reaction.post_id = "Post".id)
+                        `),
+                        "INTEGER"
+                    ), 'total_reactions'
+
+                ],
+                [
+                    Sequelize.cast(
+                        Sequelize.literal(`
+                            (SELECT COUNT(*) FROM post WHERE post.parent_id = "Post".id)
+                        `),
+                       "INTEGER"
+                    ),  'total_replies'
                 ],
                 [
                     Sequelize.literal(`
@@ -305,33 +473,45 @@ export const feedMk2 = async (filter: feedFilterDTO) => {
         throw new Error("Tamanho da página obrigatório");
     }
 
-    // Busca todos os posts com informações do usuário
+
     const posts = await Post.findAll({
+        where: { parent_id: null },
         attributes: [
             "id",
             "conteudo",
             "usuario_id",
             "data_criacao",
             [
-                Sequelize.literal(`(
-                    SELECT COUNT(*) FROM post_reaction 
-                    WHERE post_reaction.post_id = "Post".id
-                )`),
-                "total_reactions"
+                Sequelize.cast(
+                    Sequelize.literal(`(
+                        SELECT COUNT(*) FROM post_reaction 
+                        WHERE post_reaction.post_id = "Post".id
+                    )`),
+                    "INTEGER"
+                ), "total_reactions"
+            ],
+            [
+                Sequelize.cast(
+                    Sequelize.literal(`(
+                        SELECT COUNT(*) FROM post 
+                        WHERE post.parent_id = "Post".id
+                    )`),
+                    "INTEGER"
+                ), "total_replies"
             ],
             filter.id
                 ? [
-                      Sequelize.literal(`(
+                    Sequelize.literal(`(
                           SELECT EXISTS (
                               SELECT 1 FROM post_reaction 
                               WHERE post_reaction.post_id = "Post".id 
                               AND post_reaction.usuario_id = ${filter.id}
                           )
                       )`),
-                      "liked"
-                  ]
+                    "liked"
+                ]
                 : []
-        ].filter(Boolean), // Remove elementos vazios
+        ].filter(Boolean),
         include: [
             {
                 model: Usuario,
@@ -339,7 +519,7 @@ export const feedMk2 = async (filter: feedFilterDTO) => {
                 attributes: ["nome", "username", "img_url", "data_criacao"]
             }
         ],
-        order: Sequelize.literal("random()"), // Retorna aleatoriamente
+        order: Sequelize.literal("random()"),
         limit: filter.tamanhoPagina
     });
 

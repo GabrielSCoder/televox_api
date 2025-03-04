@@ -1,10 +1,11 @@
 import express from "express";
-import { postAsync, deleteAsync, updateAsync, getAsync, getAllByUserAsync, getByFilterAsync, reactPostAsync, getPostReactionsTotal, listWithReactions } from "../controllers/postController";
+import { postAsync, deleteAsync, updateAsync, getAsync, getAllByUserAsync, getByFilterAsync, reactPostAsync, getPostReactionsTotal, listWithReactions,getReplies } from "../controllers/postController";
 import { authenticate } from "../controllers/authController";
 
 const postRouter = express.Router();
 
-postRouter.get("/:id", getAsync)
+postRouter.post("/get", getAsync)
+postRouter.post("/reply", getReplies)
 postRouter.get("/all/:id", authenticate, getAllByUserAsync)
 postRouter.post("/reactPost", authenticate, reactPostAsync)
 postRouter.post("/filter", getByFilterAsync)

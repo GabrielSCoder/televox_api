@@ -4,7 +4,7 @@ import { authenticate } from "../controllers/authController";
 
 const feedRouter = express.Router()
 
-feedRouter.post("/mk1", authenticate, getAsyncMk1);  
+feedRouter.post("/mk1", getAsyncMk1);  
 feedRouter.post("/mk2", authenticate, getAsyncMk2);  
 
 export default feedRouter

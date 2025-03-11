@@ -43,7 +43,9 @@ module.exports = (sequelize, DataTypes) => {
     senha: DataTypes.STRING,
     data_nascimento : DataTypes.STRING,
     genero : DataTypes.CHAR,
+    texto_bio : DataTypes.STRING,
     img_url : DataTypes.STRING,
+    background_url : DataTypes.STRING,
     data_criacao : DataTypes.DATE,
     data_edicao : DataTypes.DATE
   }, {

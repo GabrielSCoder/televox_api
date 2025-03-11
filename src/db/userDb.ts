@@ -53,7 +53,9 @@ const convertToDTO = async (data: usuarioForm) => {
         username: data.username,
         email: data.email,
         genero: data.genero,
+        texto_bio : data.texto_bio,
         img_url: data.img_url ?? "",
+        background_url : data.background_url,
         data_nascimento: data.data_nascimento,
         data_criacao: data.data_criacao,
         data_modificacao: data.data_modificacao

@@ -16,7 +16,8 @@ export default function socketConfiguration(server: HttpServer) {
 
     io.on("connection", (socket) => {
 
-        console.log("Usuários conectados: x", Array.from(io.sockets.sockets.keys()));
+        console.log(new Date())
+        console.log("Usuários conectados: ", io.engine.clientsCount);
 
 
         socket.on("follow", async (data: followForm) => {
@@ -71,7 +72,8 @@ export default function socketConfiguration(server: HttpServer) {
         })
 
         socket.on("disconnect", () => {
-            console.log("Usuário desconectado: ", socket.id)
+            console.log(new Date())
+            console.log("XXXXXXXXXXXXXXXXX-Usuário desconectado: ", socket.id)
             console.log("Usuários conectados: ", io.engine.clientsCount);
         })
     })

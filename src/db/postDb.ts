@@ -429,11 +429,11 @@ export const feedMk1 = async (filter: feedFilterDTO) => {
 
 
 
-    if (filter.id && filter.tamanhoPagina) {
-        const user = await Usuario.findByPk(filter.id)
-        if (!user) {
-            throw new Error("Usuario não encontrado")
-        }
+    if (filter.tamanhoPagina) {
+        // const user = await Usuario.findByPk(filter.id)
+        // if (!user) {
+        //     throw new Error("Usuario não encontrado")
+        // }
 
         const posts = await Post.findAll({
             include: [

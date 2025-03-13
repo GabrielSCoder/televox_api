@@ -17,9 +17,9 @@ export const postAsync = async (req: { body: any }, res: resType) => {
 export const updateAsync = async (req: { body: any }, res: resType) => {
     try {
         const resp = await update(req.body)
-        return res.status(200).json(resp)
+        return res.status(200).json({success : true , dados : resp})
     } catch (error : any) {
-        return res.status(500).json({error : error.message})
+        return res.status(500).json({success : false , error : error.message})
     }
 }
 

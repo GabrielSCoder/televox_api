@@ -5,6 +5,7 @@ import postRouter from "./postRoute";
 import userRouter from "./userRoute";
 import followRouter from "./followRoute";
 import sessionRouter from "./sessionRoute";
+import notificationRouter from "./notificationRoute";
 
 const mainRouter = Router()
 
@@ -14,5 +15,6 @@ mainRouter.use("/post", postRouter);
 mainRouter.use("/feed", feedRouter)
 mainRouter.use("/follow", followRouter)
 mainRouter.use("/session", sessionRouter)
+mainRouter.use("/notificacao", notificationRouter)
 
 export default mainRouter

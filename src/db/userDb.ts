@@ -159,17 +159,18 @@ export const verifySenha = async (password: string) => {
     }
 }
 
-export const update = async (data: { id: any; nome: any; email: any; senha: any; data_criacao: any; }) => {
+export const update = async (data: usuarioDTO) => {
 
-    await validate(data)
+    // await validate(data)
     await getById(data.id)
 
     const res = await Usuario.update(
         {
             nome: data.nome,
             email: data.email,
-            senha: data.senha,
-            data_criacao: data.data_criacao,
+            texto_bio : data.texto_bio,
+            img_url : data.img_url,
+            background_url : data.background_url,
             data_edicao: new Date()
         },
         {

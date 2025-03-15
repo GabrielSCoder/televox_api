@@ -1,4 +1,4 @@
-import { create, destroy, getNotificationsByUserId } from "../db/notification";
+import { confirmNotifications, createNotification, destroy, getNotificationsByUserId } from "../db/notification";
 
 type resType = {
     status: (code: number) => any;
@@ -7,7 +7,16 @@ type resType = {
 
 export const createAsync = async (req: { body: any }, res: resType) => {
     try {
-        const resp = await create(req.body)
+        const resp = await createNotification(req.body)
+        return res.status(200).json({success : true, dados : resp})
+    } catch (error : any) {
+        return res.status(500).json({success : false, error : error.message})
+    } 
+}
+
+export const confirmAsync = async (req: { body: any }, res: resType) => {
+    try {
+        const resp = await confirmNotifications(req.body)
         return res.status(200).json({success : true, dados : resp})
     } catch (error : any) {
         return res.status(500).json({success : false, error : error.message})

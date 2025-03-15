@@ -56,6 +56,7 @@ export type responsePostFilterDTO = {
 export type reactPostForm = {
     post_id : number
     usuario_id : number
+    profile_id : number
 }
 
 export type getPostForm = {

@@ -7,7 +7,7 @@ const userRouter = express.Router();
 userRouter.put("/", authenticate, updateAsync);  
 userRouter.get("/:id", authenticate, getAsync);
 userRouter.delete("/:id", authenticate, deleteAsync);
-userRouter.post("/verify/email", authenticate , verifyEmailAsync);
+userRouter.post("/verify/email",  verifyEmailAsync);
 
 userRouter.post("/", postAsync);   
 userRouter.post("/verify/password", verifyPassword);

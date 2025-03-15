@@ -30,6 +30,7 @@ module.exports = (sequelize, DataTypes) => {
         usuario_id: DataTypes.INTEGER,
         usuario_destino: DataTypes.INTEGER,
         post_id : DataTypes.INTEGER,
+        visualizado : DataTypes.BOOLEAN,
         data_criacao: DataTypes.DATE,
         data_modificao: DataTypes.DATE
 

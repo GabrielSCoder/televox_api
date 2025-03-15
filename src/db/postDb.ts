@@ -516,7 +516,7 @@ export const feedMk2 = async (filter: feedFilterDTO) => {
             {
                 model: Usuario,
                 as: "usuario",
-                attributes: ["nome", "username", "img_url", "data_criacao"]
+                attributes: ["id","nome", "username", "img_url", "data_criacao"]
             }
         ],
         order: Sequelize.literal("random()"),

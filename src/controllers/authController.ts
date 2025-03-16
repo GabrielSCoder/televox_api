@@ -7,7 +7,7 @@ const User = db.Usuario;
 dotenv.config()
 
 export const generateTokens = (user: { id: any; }) => {
-    const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_SECRET as string, { expiresIn: "2hr" });
+    const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_SECRET as string, { expiresIn: "2min" });
     const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET as string, { expiresIn: "1d" });
 
     return { accessToken, refreshToken };
@@ -53,31 +53,54 @@ export const login2 = async (req: any, res: any) => {
 
 //checa o token de acesso e retorna o Id do usuario
 export const checkLogin = async (req: any, res: any) => {
+    const accessToken = req.headers["authorization"];
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!accessToken || !refreshToken) {
+        return res.status(401).json({ success: false, error: "Não autorizado" });
+    }
+
+    const token = accessToken.split(" ")[1];
 
     try {
-        const accessToken = req.headers['authorization'];
-
-        if (!accessToken) {
-            return res.status(401).json({ success: false, error: "Não autorizado" });
-        }
-
-        const token = accessToken.split(' ')[1];
-
-
         const decoded = jwt.verify(token, process.env.ACCESS_SECRET as string);
 
         if (typeof decoded !== "object" || !decoded.id) {
             return res.status(401).json({ error: "Token inválido" });
         }
 
-        const user = await getById(decoded.id)
-
+        const user = await getById(decoded.id);
         return res.json({ success: true, user });
 
-    } catch (error) {
-        return res.status(401).json({ success: false, error: "Token inválido ou expirado" });
+    } catch (err: any) {
+        if (err.name === "TokenExpiredError") {
+            if (!refreshToken) {
+                return res.status(403).json({ error: "Sessão expirada. Faça login novamente." });
+            }
+
+            try {
+                const decodedRefresh = jwt.verify(refreshToken, process.env.REFRESH_SECRET as string);
+
+                if (typeof decodedRefresh !== "object" || !decodedRefresh.id) {
+                    return res.status(403).json({ error: "Refresh token inválido." });
+                }
+
+                // Gera novo token
+                const { accessToken } = generateTokens({ id: decodedRefresh.id });
+
+                // Retorna o usuário junto com o novo token
+                const user = await getById(decodedRefresh.id);
+                return res.json({ success: true, user, newToken: accessToken });
+
+            } catch (refreshErr) {
+                return res.status(403).json({ error: "Refresh token expirado. Faça login novamente." });
+            }
+        }
+
+        return res.status(401).json({ error: "Token inválido." });
     }
 };
+
 
 //limpa o token refresh
 export const logout = (req: any, res: any) => {
@@ -92,67 +115,12 @@ export const logout = (req: any, res: any) => {
         })
 
         return res.status(200).json({ success: true, message: "Logout realizado!" });
-        
+
     } catch (error) {
-        return res.status(500).json({ success : false, message : error})
+        return res.status(500).json({ success: false, message: error })
     }
 }
 
-
-//verifica se o token refresh é valido e gera outro conjunto access/refresh
-export const refreshToken = async (req: any, res: any) => {
-
-    const token = req.cookies.refreshToken;
-    if (!token) return res.status(401).json({ success: false, error: "Sem refresh token" });
-
-    jwt.verify(token, process.env.REFRESH_SECRET as string, (err: any, user: any) => {
-
-        if (err) return res.status(401).json({ success: false, error: "Refresh token inválido" });
-
-        const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
-
-        res.cookie("refreshToken", newRefreshToken, {
-            httpOnly: true,
-            secure: false,
-            sameSite: "Strict",
-            path: "/auth"
-        });
-
-        res.json({ success: true, token: accessToken });
-    });
-};
-
-
-//concede um novo codigo de acesso
-export const newAccessToken = async (req: any, res: any) => {
-
-    const token = req.cookies.refreshToken;
-
-    if (!token) return res.status(401).json({ success: false, error: "Sem refresh token" });
-
-    try {
-
-        const decoded = jwt.verify(token, process.env.REFRESH_SECRET as string);
-
-        if (typeof decoded !== "object" || !decoded.id) {
-            return res.status(401).json({ error: "Refresh token expirado ou inválido" });
-        }
-    
-        const accessToken = jwt.sign({ id: decoded.id },  process.env.ACCESS_SECRET as string, { expiresIn: "15s" });
-    
-        res.json({ success: true, token: accessToken });
-
-    } catch (error) {
-
-        if (error instanceof jwt.TokenExpiredError) {
-            return res.status(401).json({ error: "Refresh token expirado" });
-        }
-        return res.status(401).json({ error: "Erro ao validar o refresh token" });
-    }
-
-  
-
-};
 
 //verifica o token de acesso e permite a requisição
 export const authenticate = (req: any, res: any, next: any) => {
@@ -170,7 +138,7 @@ export const authenticate = (req: any, res: any, next: any) => {
     }
 
 
-    jwt.verify(token,  process.env.ACCESS_SECRET as string, (err: any, user: any) => {
+    jwt.verify(token, process.env.ACCESS_SECRET as string, (err: any, user: any) => {
         if (err) {
             return res.status(401).json({ error: "Token inválido ou expirado" });
         }

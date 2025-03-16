@@ -5,6 +5,8 @@ const { Usuario, Notificacao, Post } = require("../models");
 
 export const validate = async (data: notificaoForm) => {
 
+    console.log("-----------validate--------", data)
+
     if (data.tipo && typeof (data.tipo) == "string") {
        
 
@@ -40,6 +42,8 @@ export const validate = async (data: notificaoForm) => {
 
 export const createNotification = async (data: notificaoForm) => {
 
+    console.log("Entrando na função", data)
+
     await validate(data)
 
     if (data.usuario_id != data.usuario_destino) {
@@ -50,6 +54,8 @@ export const createNotification = async (data: notificaoForm) => {
             verify = await Notificacao.findOne({ where : {tipo : data.tipo, usuario_id : data.usuario_id, usuario_destino : data.usuario_destino, post_id : data.post_id}})
         } else if (data.tipo == "follow") {
             verify = await Notificacao.findOne({ where : {tipo : data.tipo, usuario_id : data.usuario_id, usuario_destino : data.usuario_destino}})
+        } else if (data.tipo == "reply") {
+            verify = await Notificacao.findOne({ where : {tipo : data.tipo, usuario_id : data.usuario_id, usuario_destino : data.usuario_destino, post_id : data.post_id}})
         }
 
 

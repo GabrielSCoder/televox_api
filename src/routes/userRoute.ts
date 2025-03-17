@@ -9,10 +9,10 @@ userRouter.get("/:id", authenticate, getAsync);
 userRouter.delete("/:id", authenticate, deleteAsync);
 userRouter.post("/verify/email",  verifyEmailAsync);
 
-userRouter.post("/", postAsync);   
+userRouter.post("/", authenticate, postAsync);   
 userRouter.post("/verify/password", verifyPassword);
-userRouter.get("/find/:username", getUsernameAsync);
-userRouter.post("/verify/username", verifyUsernameAsync);
-userRouter.post("/getByfilter", getUsersByFilterAsync);
+userRouter.get("/find/:username", authenticate, getUsernameAsync);
+userRouter.post("/verify/username", authenticate, verifyUsernameAsync);
+userRouter.post("/getByfilter", authenticate, getUsersByFilterAsync);
 
 export default userRouter;

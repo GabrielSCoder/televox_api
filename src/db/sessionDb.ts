@@ -2,29 +2,31 @@ import { sessaoForm } from "../types/sessaoT";
 
 const { Sessao, Usuario } = require("../models")
 
-export async function CreateSession(data: sessaoForm) {
+export async function CreateSession(data: sessaoForm, res : any) {
+    if (data.fingerPrint && data.ip && data.os && data.usuario_id) {
+        const check = await Usuario.findByPk(data.usuario_id)
+        if (!check) throw new Error("Usuário não encontrado")
+        const s = await Sessao.create({os_browser : data.os, fingerprint_id : data.fingerPrint, ip_address : data.ip, usuario_id : data.usuario_id, data_login : Date.now()})
+        
+        if (!s) throw new Error("Erro interno na criação de sessão")
+        
+        res.cookie("riptn", data.fingerPrint, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "Strict",
+            domain: "localhost",
+            path: "/auth"
+        })
 
-    if (data && data.dispositivo_id && typeof (data.usuario_id) == "number") {
-        const usuarioCheck = await Usuario.findByPk(data.usuario_id)
+        res.cookie("seddra", s.ip_address, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "Strict",
+            domain: "localhost",
+            path: "/auth"
+        })
 
-        if (usuarioCheck) {
-            const device_check = await Sessao.findOne({ where: { dispositivo_id: data.dispositivo_id } })
-
-            if (!device_check) {
-                const create = await Sessao.create({ ...data, data_login: Date.now() })
-
-                if (create) {
-                    return create
-                } else {
-                    throw new Error("Erro interno")
-                }
-
-            } else {
-                throw new Error("dispositivo já possui sessão ativa")
-            }
-        } else {
-            throw new Error("Usuário não existe")
-        }
+        return s
     } else {
         throw new Error("Dados obrigatórios")
     }

@@ -7,9 +7,9 @@ const followRouter = express.Router()
 followRouter.post("/", authenticate, postAsync);
 followRouter.post("/verifyUserX", authenticate, verifyAsync);
 followRouter.get("/following/:id", getFollowing);
-followRouter.post("/compare/following", getFollowingCompare);
-followRouter.post("/compare/followers", getFollowerCompare);
-followRouter.get("/total/:id", getTotalizers );
-followRouter.get("/followers/:id", getFollowers);
+followRouter.post("/compare/following", authenticate, getFollowingCompare);
+followRouter.post("/compare/followers", authenticate, getFollowerCompare);
+followRouter.get("/total/:id", authenticate, getTotalizers );
+followRouter.get("/followers/:id", authenticate, getFollowers);
 
 export default followRouter

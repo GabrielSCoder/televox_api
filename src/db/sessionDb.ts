@@ -3,6 +3,7 @@ import { sessaoForm } from "../types/sessaoT";
 const { Sessao, Usuario } = require("../models")
 
 export async function CreateSession(data: sessaoForm, res : any) {
+    console.log(data)
     if (data.fingerPrint && data.ip && data.os && data.usuario_id) {
         const check = await Usuario.findByPk(data.usuario_id)
         if (!check) throw new Error("Usuário não encontrado")
@@ -15,7 +16,7 @@ export async function CreateSession(data: sessaoForm, res : any) {
             secure: false,
             sameSite: "Strict",
             domain: "localhost",
-            path: "/auth",
+            path: "/",
             maxAge : 2 * 24 * 60 * 60 * 1000 
         })
 
@@ -24,7 +25,7 @@ export async function CreateSession(data: sessaoForm, res : any) {
             secure: false,
             sameSite: "Strict",
             domain: "localhost",
-            path: "/auth",
+            path: "/",
             maxAge : 2 * 24 * 60 * 60 * 1000 
         })
 

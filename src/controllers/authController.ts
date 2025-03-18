@@ -1,123 +1,115 @@
+import { login2 } from "../db/authDb"
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv"
-import { getById } from "../db/userDb";
 import { CreateSession } from "../db/sessionDb";
-import { TIME_LIMIT } from "../utils/parameters";
+import { getById } from "../db/userDb";
+
 const db = require("../models");
-const User = db.Usuario;
 const Sessao = db.Sessao
 
-dotenv.config()
+const TIME_LIMIT = 5 * 60 * 60 * 1000
+
+type resType = {
+    status: (code: number) => any;
+    json: (data: any) => void
+    cookie: any
+}
 
 export const generateTokens = (user: { id: any; }) => {
-    const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_SECRET as string, { expiresIn: "5d" });
-    const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET as string, { expiresIn: "2min" });
+    const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_SECRET as string, { expiresIn: "10s" });
+    const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET as string, { expiresIn: "5d" });
 
     return { accessToken, refreshToken };
 };
 
+export const postAsync = async (req: { body: any, headers: any, cookies: any }, res: resType) => {
 
-export const login2 = async (req: any, res: any) => {
+    try {
+        const { email, senha, os, finger } = req.body
 
-    const hmac = req.headers["hmac"];
 
-    console.log("HMAC RECEBIDO ---------", hmac)
+        const resp = await login2({ email, senha })
 
-    const { email, senha, os, finger } = req.body;
+        const hmac = req.headers["hmac"];
 
-    const erros: Object[] = []
 
-    if (!email) {
-        erros.push({ campo: "email", menssagem: "Email obrigatório" })
+        const { accessToken, refreshToken } = generateTokens(resp);
+
+        res.cookie("rfssid", refreshToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "Strict",
+            domain: "localhost",
+            path: "/",
+            maxAge: TIME_LIMIT
+        });
+
+        await CreateSession({ fingerPrint: finger, ip: hmac, os: os, usuario_id: resp.id }, res)
+
+        return res.status(200).json({ success: true, usuario_id: resp.id, dados: { message: "Login realizado!", token: accessToken } })
+
+    } catch (error: any) {
+        return res.status(500).json({ success: false, error: error.message })
     }
+}
 
-    if (!senha) {
-        erros.push({ campo: "senha", menssagem: "senha obrigatória" })
-    }
-
-    if (erros.length > 0) {
-        return res.status(401).json(erros)
-    }
-
-    const user = await User.findOne({ where: { email } });
-
-    if (!user || !user.check(senha)) {
-        return res.status(401).json({success : false, error : { mensagem: "Email e/ou senha incorreta!" }})
-    }
-
-    const { accessToken, refreshToken } = generateTokens(user);
-
-    res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: false,
-        sameSite: "Strict",
-        domain: "localhost",
-        path: "/auth",
-        maxAge : 6 * 24 * 60 * 60 * 1000 
-    });
-
-    const s = await CreateSession({fingerPrint : finger, ip : hmac, os : os, usuario_id : user.id}, res)
-
-    if (!s) throw new Error("Erro de criação de sessão")
-
-    return res.status(200).json({ usuario_id: user.id, message: "Login realizado!", token: accessToken })
-};
 
 //checa o token de acesso e retorna o Id do usuario
 export const checkLogin = async (req: any, res: any) => {
     const accessToken = req.headers["authorization"];
     const hmac = req.headers["hmac"];
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies.rfssid;
     const fingerPrint = req.cookies.riptn;
     const seddra = req.cookies.seddra
 
-    if (!accessToken || !refreshToken || !fingerPrint) {
+    if (!accessToken || !refreshToken || !fingerPrint || !hmac) {
         return res.status(401).json({ success: false, error: "Não autorizado" });
     }
 
     const token = accessToken.split(" ")[1];
 
+
     try {
         const decoded = jwt.verify(token, process.env.ACCESS_SECRET as string);
 
         if (typeof decoded !== "object" || !decoded.id) {
-            return res.status(401).json({ error: "Token inválido" });
+            return res.status(401).json({ error: "Erro de comparação" });
         }
 
-        const checkPrint = await Sessao.findOne({where : {fingerprint_id : fingerPrint, usuario_id : decoded.id, ip_address : seddra}})
+        const checkPrint = await Sessao.findOne({ where: { fingerprint_id: fingerPrint, usuario_id: decoded.id, ip_address: seddra } })
 
         if (!checkPrint) {
-            return res.status(403).json({ error: "Dados da sessão não conferem." });
+            return res.status(401).json({ error: "Dados da sessão não conferem." });
         }
 
         if (hmac != checkPrint.ip_address) {
-            return res.status(403).json({ error: "Dados de hmac não conferem." });
+            return res.status(401).json({ error: "Dados de hmac não conferem." });
         }
 
         const user = await getById(decoded.id);
-        return res.json({ success: true, user });
+
+        return res.status(200).json({ success: true, user });
 
     } catch (err: any) {
         if (err.name === "TokenExpiredError") {
             if (!refreshToken) {
-                return res.status(403).json({ error: "Sessão expirada. Faça login novamente." });
+                return res.status(401).json({ error: "Sessão expirada. Faça login novamente." });
             }
 
             try {
                 const decodedRefresh = jwt.verify(refreshToken, process.env.REFRESH_SECRET as string);
 
                 if (typeof decodedRefresh !== "object" || !decodedRefresh.id) {
-                    return res.status(403).json({ error: "Refresh token inválido." });
+                    return res.status(401).json({ error: "Refresh token inválido." });
                 }
 
                 const { accessToken } = generateTokens({ id: decodedRefresh.id });
 
-             
+
                 const user = await getById(decodedRefresh.id);
                 return res.json({ success: true, user, newToken: accessToken });
 
             } catch (refreshErr) {
-                return res.status(403).json({ error: "Refresh token expirado. Faça login novamente." });
+                return res.status(401).json({ error: "Refresh token expirado. Faça login novamente." });
             }
         }
 
@@ -141,15 +133,15 @@ export const logout = async (req: any, res: any) => {
             return res.status(403).json({ error: "token inválido." });
         }
 
-        await Sessao.destroy({where : {usuario_id : decodedRefresh.id, ip_address : hmac, fingerprint_id : fingerPrint }})
+        await Sessao.destroy({ where: { usuario_id: decodedRefresh.id, ip_address: hmac, fingerprint_id: fingerPrint } })
 
-        res.cookie("refreshToken", "", {
+        res.cookie("rfssid", "", {
             httpOnly: true,
             secure: false,
             sameSite: "Strict",
             domain: "localhost",
-            path: "/auth",
-            expire: new Date(0)
+            path: "/",
+            maxAge: -1
         })
 
         res.cookie("seddra", "", {
@@ -157,8 +149,8 @@ export const logout = async (req: any, res: any) => {
             secure: false,
             sameSite: "Strict",
             domain: "localhost",
-            path: "/auth",
-            expire: new Date(0)
+            path: "/",
+            maxAge: -1
         })
 
         res.cookie("riptn", "", {
@@ -166,8 +158,8 @@ export const logout = async (req: any, res: any) => {
             secure: false,
             sameSite: "Strict",
             domain: "localhost",
-            path: "/auth",
-            expire: new Date(0)
+            path: "/",
+            maxAge: -1
         })
 
         return res.status(200).json({ success: true, message: "Logout realizado!" });
@@ -178,18 +170,61 @@ export const logout = async (req: any, res: any) => {
 }
 
 
-//verifica o token de acesso e permite a requisição
-export const authenticate = (req: any, res: any, next: any) => {
+// //verifica o token de acesso e permite a requisição
+// export const authenticate = (req: any, res: any, next: any) => {
 
-    const authHeader = req.headers['authorization'];
-    const Timestamp = req.headers['timestamp'];
-    const now = Date.now()
+//     const refreshToken = req.cookies.refreshToken;
+//     const fingerPrint = req.cookies.riptn;
+//     const seddra = req.cookies.seddra
+//     const hmac = req.headers["hmac"];
+//     const authHeader = req.headers['authorization'];
+//     const Timestamp = req.headers['timestamp'];
+//     const now = Date.now()
 
-    if (!Timestamp) {
+//     if (!Timestamp) {
+//         return res.status(401).json({ error: "Requisição sem timestamp" });
+//     }
+
+//     if (now - Timestamp > TIME_LIMIT) {
+//         return res.status(401).json({ error: "Requisição expirada" });
+//     }
+
+//     if (!authHeader) {
+//         return res.status(401).json({ error: "Token ausente" });
+//     }
+
+//     const token = authHeader.split(' ')[1];
+
+//     if (!token) {
+//         return res.status(401).json({ error: "Token inválido" });
+//     }
+
+
+//     jwt.verify(token, process.env.ACCESS_SECRET as string, (err: any, user: any) => {
+//         if (err) {
+//             return res.status(401).json({ error: "Token inválido ou expirado" });
+//         }
+
+//         req.user = user;
+//         next();
+//     });
+// };
+
+
+export const authenticate = async (req: any, res: any, next: any) => {
+    const refreshToken = req.cookies.rfssid;
+    const fingerPrint = req.cookies.riptn;
+    const seddra = req.cookies.seddra;
+    const hmac = req.headers["hmac"];
+    const authHeader = req.headers["authorization"];
+    const timestamp = req.headers["timestamp"];
+    const now = Date.now();
+
+    if (!timestamp) {
         return res.status(401).json({ error: "Requisição sem timestamp" });
     }
 
-    if (now - Timestamp > TIME_LIMIT) {
+    if (now - Number(timestamp) > TIME_LIMIT) {
         return res.status(401).json({ error: "Requisição expirada" });
     }
 
@@ -197,20 +232,70 @@ export const authenticate = (req: any, res: any, next: any) => {
         return res.status(401).json({ error: "Token ausente" });
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = authHeader.split(" ")[1];
 
     if (!token) {
         return res.status(401).json({ error: "Token inválido" });
     }
 
+    try {
+        const decodedRefresh = jwt.verify(token, process.env.ACCESS_SECRET as string);
 
-    jwt.verify(token, process.env.ACCESS_SECRET as string, (err: any, user: any) => {
-        if (err) {
-            return res.status(401).json({ error: "Token inválido ou expirado" });
+        if (decodedRefresh) {
+            return next();
         }
 
-        req.user = user;
-        next();
-    });
-};
 
+    } catch (err: any) {
+        if (err.name === "TokenExpiredError") {
+
+            if (!refreshToken) {
+                return res.status(401).json({ error: "Token expirado e nenhum refresh token foi fornecido" });
+            }
+
+            console.log("---------------------passou de refresh 1--------------")
+
+            try {
+                const session = await Sessao.findOne({
+                    where: { fingerprint_id: fingerPrint, ip_address: seddra },
+                });
+
+                console.log("---------------------passou de sessão 1--------------")
+
+                if (!session) {
+                    return res.status(401).json({ error: "sessão expirada" });
+                }
+
+                console.log("---------------------passou de sessão 2--------------")
+
+                if (session.ip_address !== hmac) {
+                    return res.status(401).json({ error: "Dados diferentes" });
+                }
+
+                console.log("---------------------passou de sessão x hmac--------------")
+
+                const decodedRefresh = jwt.verify(refreshToken, process.env.REFRESH_SECRET as string);
+
+                if (typeof decodedRefresh !== "object" || !decodedRefresh.id) {
+                    return res.status(401).json({ error: "Refresh token inválido." });
+                }
+
+                console.log("---------------------passou de decoded --------------")
+
+                const { accessToken } = generateTokens({ id: decodedRefresh.id });
+
+                console.log("---------------------gerou outro token--------------")
+
+                res.setHeader("Authorization", `Bearer ${accessToken}`);
+
+                req.headers["authorization"] = `Bearer ${accessToken}`;
+
+                return next();
+            } catch (refreshErr) {
+                return res.status(401).json({ error: "Refresh token expirado. Faça login novamente." });
+            }
+        }
+
+        return res.status(401).json({ error: "Token inválido." });
+    }
+}

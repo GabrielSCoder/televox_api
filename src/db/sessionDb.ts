@@ -15,7 +15,8 @@ export async function CreateSession(data: sessaoForm, res : any) {
             secure: false,
             sameSite: "Strict",
             domain: "localhost",
-            path: "/auth"
+            path: "/auth",
+            maxAge : 2 * 24 * 60 * 60 * 1000 
         })
 
         res.cookie("seddra", s.ip_address, {
@@ -23,7 +24,8 @@ export async function CreateSession(data: sessaoForm, res : any) {
             secure: false,
             sameSite: "Strict",
             domain: "localhost",
-            path: "/auth"
+            path: "/auth",
+            maxAge : 2 * 24 * 60 * 60 * 1000 
         })
 
         return s

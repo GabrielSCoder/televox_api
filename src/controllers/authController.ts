@@ -10,8 +10,8 @@ const Sessao = db.Sessao
 dotenv.config()
 
 export const generateTokens = (user: { id: any; }) => {
-    const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_SECRET as string, { expiresIn: "2min" });
-    const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET as string, { expiresIn: "1d" });
+    const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_SECRET as string, { expiresIn: "5d" });
+    const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET as string, { expiresIn: "2min" });
 
     return { accessToken, refreshToken };
 };
@@ -19,7 +19,11 @@ export const generateTokens = (user: { id: any; }) => {
 
 export const login2 = async (req: any, res: any) => {
 
-    const { email, senha, os, ip, finger } = req.body;
+    const hmac = req.headers["hmac"];
+
+    console.log("HMAC RECEBIDO ---------", hmac)
+
+    const { email, senha, os, finger } = req.body;
 
     const erros: Object[] = []
 
@@ -38,7 +42,7 @@ export const login2 = async (req: any, res: any) => {
     const user = await User.findOne({ where: { email } });
 
     if (!user || !user.check(senha)) {
-        return res.status(401).json([{ menssagem: "Email e/ou senha incorreta!" }])
+        return res.status(401).json({success : false, error : { mensagem: "Email e/ou senha incorreta!" }})
     }
 
     const { accessToken, refreshToken } = generateTokens(user);
@@ -48,10 +52,11 @@ export const login2 = async (req: any, res: any) => {
         secure: false,
         sameSite: "Strict",
         domain: "localhost",
-        path: "/auth"
+        path: "/auth",
+        maxAge : 6 * 24 * 60 * 60 * 1000 
     });
 
-    const s = await CreateSession({fingerPrint : finger, ip : ip, os : os, usuario_id : user.id}, res)
+    const s = await CreateSession({fingerPrint : finger, ip : hmac, os : os, usuario_id : user.id}, res)
 
     if (!s) throw new Error("Erro de criação de sessão")
 
@@ -85,7 +90,7 @@ export const checkLogin = async (req: any, res: any) => {
             return res.status(403).json({ error: "Dados da sessão não conferem." });
         }
 
-        if (hmac !=  checkPrint.ip_address) {
+        if (hmac != checkPrint.ip_address) {
             return res.status(403).json({ error: "Dados de hmac não conferem." });
         }
 
@@ -122,8 +127,22 @@ export const checkLogin = async (req: any, res: any) => {
 
 
 //limpa o token refresh
-export const logout = (req: any, res: any) => {
+export const logout = async (req: any, res: any) => {
+    const authHeader = req.headers['authorization'];
+    const hmac = req.headers["hmac"];
+    const fingerPrint = req.cookies.riptn;
+    const token = authHeader.split(' ')[1];
+
     try {
+
+        const decodedRefresh = jwt.verify(token, process.env.ACCESS_SECRET as string);
+
+        if (typeof decodedRefresh !== "object" || !decodedRefresh.id) {
+            return res.status(403).json({ error: "token inválido." });
+        }
+
+        await Sessao.destroy({where : {usuario_id : decodedRefresh.id, ip_address : hmac, fingerprint_id : fingerPrint }})
+
         res.cookie("refreshToken", "", {
             httpOnly: true,
             secure: false,

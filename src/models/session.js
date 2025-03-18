@@ -31,18 +31,18 @@ module.exports = (sequelize, DataTypes) => {
         modelName: 'Sessao',
         tableName: 'sessao',
         timestamps: false,
-        hooks: {
-            beforeCreate: async (session) => {
-                console.log("HMAC inicial:", session.ip_address);
-                session.ip_address = await generateHMAC(session.ip_address, process.env.HMAC_SECRET)
-                console.log("HMAC final:", session.ip_address);
-            },
-            beforeUpdate: async (session) => {
-                if (session.changed("ip_address")) {
-                    session.ip_address = await generateHMAC(session.ip_address, process.env.HMAC_SECRET)
-                }
-            }
-        }
+        // hooks: {
+        //     beforeCreate: async (session) => {
+        //         console.log("HMAC inicial:", session.ip_address);
+        //         session.ip_address = await generateHMAC(session.ip_address, process.env.HMAC_SECRET)
+        //         console.log("HMAC final:", session.ip_address);
+        //     },
+        //     beforeUpdate: async (session) => {
+        //         if (session.changed("ip_address")) {
+        //             session.ip_address = await generateHMAC(session.ip_address, process.env.HMAC_SECRET)
+        //         }
+        //     }
+        // }
     });
     return Sessao;
 };

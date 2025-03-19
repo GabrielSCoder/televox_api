@@ -5,6 +5,7 @@ import { corsConfig, ServerPort } from "./utils/serverConfig";
 import mainRouter from "./routes/mainRoute";
 import { createServer } from "http";
 import socketConfiguration from "./utils/socketConfig";
+require('dotenv').config();
 
 const app = express();
 const server = createServer(app)

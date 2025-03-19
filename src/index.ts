@@ -5,7 +5,7 @@ import { corsConfig, ServerPort } from "./utils/serverConfig";
 import mainRouter from "./routes/mainRoute";
 import { createServer } from "http";
 import socketConfiguration from "./utils/socketConfig";
-require('dotenv').config();
+import { VercelRequest, VercelResponse } from '@vercel/node';
 
 const app = express();
 const server = createServer(app)
@@ -18,4 +18,6 @@ socketConfiguration(server)
 
 app.use(mainRouter)
 
-server.listen(ServerPort, "0.0.0.0",  () => console.log("Servidor rodando na porta 3003"));
+export default (req: VercelRequest, res: VercelResponse) => {
+    return app(req, res);
+};

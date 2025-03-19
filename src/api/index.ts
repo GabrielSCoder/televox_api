@@ -18,6 +18,6 @@ socketConfiguration(server)
 
 app.use(mainRouter)
 
-app.listen(3003, () => console.log("Server ready on port 3000."));
+app.listen(8080, () => console.log("Server ready on port 3000."));
 
 module.exports = app;

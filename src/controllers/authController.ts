@@ -21,7 +21,7 @@ export const generateTokens = (user: { id: any; }) => {
     return { accessToken, refreshToken };
 };
 
-export const postAsync = async (req: { body: any, headers: any, cookies: any }, res: resType) => {
+export const login = async (req: { body: any, headers: any, cookies: any }, res: resType) => {
 
     try {
         const { email, senha, os, finger } = req.body
@@ -48,7 +48,7 @@ export const postAsync = async (req: { body: any, headers: any, cookies: any }, 
         return res.status(200).json({ success: true, usuario_id: resp.id, dados: { message: "Login realizado!", token: accessToken } })
 
     } catch (error: any) {
-        return res.status(500).json({ success: false, error: error.message })
+        return res.status(401).json({ success: false, error: error.message })
     }
 }
 

@@ -5,7 +5,9 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon",
-    "build": "tsc"
+    "build": "tsc && npm run copy-models && npm run copy-config",
+    "copy-models": "ncp ./src/models ./dist/models",
+    "copy-config" : "ncp ./src/config ./dist/config"
   },
   "keywords": [],
   "author": "",
@@ -29,6 +31,7 @@
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.8",
     "@types/node": "^22.13.1",
+    "ncp": "^2.0.0",
     "nodemon": "^3.1.9",
     "sequelize-cli": "^6.6.2",
     "ts-node": "^10.9.2",

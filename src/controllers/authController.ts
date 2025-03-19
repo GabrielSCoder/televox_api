@@ -38,9 +38,9 @@ export const login = async (req: { body: any, headers: any, cookies: any }, res:
             httpOnly: true,
             secure: false,
             sameSite: "Strict",
-            domain: "localhost",
+            // domain: "localhost",
             path: "/",
-            maxAge: TIME_LIMIT
+            maxAge : 2 * 24 * 60 * 60 * 1000 
         });
 
         await CreateSession({ fingerPrint: finger, ip: hmac, os: os, usuario_id: resp.id }, res)
@@ -139,16 +139,17 @@ export const logout = async (req: any, res: any) => {
             httpOnly: true,
             secure: false,
             sameSite: "Strict",
-            domain: "localhost",
+            // domain: "localhost",
             path: "/",
-            maxAge: -1
+            maxAge: -1,
+            expires : -1
         })
 
         res.cookie("seddra", "", {
             httpOnly: true,
             secure: false,
             sameSite: "Strict",
-            domain: "localhost",
+            // domain: "localhost",
             path: "/",
             maxAge: -1
         })
@@ -157,7 +158,7 @@ export const logout = async (req: any, res: any) => {
             httpOnly: true,
             secure: false,
             sameSite: "Strict",
-            domain: "localhost",
+            // domain: "localhost",
             path: "/",
             maxAge: -1
         })

@@ -15,7 +15,7 @@ export async function CreateSession(data: sessaoForm, res : any) {
             httpOnly: true,
             secure: false,
             sameSite: "Strict",
-            domain: "localhost",
+            // domain: "localhost",
             path: "/",
             maxAge : 2 * 24 * 60 * 60 * 1000 
         })
@@ -24,7 +24,7 @@ export async function CreateSession(data: sessaoForm, res : any) {
             httpOnly: true,
             secure: false,
             sameSite: "Strict",
-            domain: "localhost",
+            // domain: "localhost",
             path: "/",
             maxAge : 2 * 24 * 60 * 60 * 1000 
         })

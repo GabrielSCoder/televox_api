@@ -18,6 +18,6 @@ socketConfiguration(server)
 
 app.use(mainRouter)
 
-export default (req: VercelRequest, res: VercelResponse) => {
-    return app(req, res);
-};
+app.listen(3003, () => console.log("Server ready on port 3000."));
+
+module.exports = app;

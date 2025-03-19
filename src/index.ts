@@ -1,11 +1,10 @@
 import express from "express";
 import cors from "cors"
 import cookieParser from "cookie-parser"
-import { corsConfig } from "../utils/serverConfig";
-import mainRouter from "../routes/mainRoute";
+import { corsConfig } from "./utils/serverConfig";
+import mainRouter from "./routes/mainRoute";
 import { createServer } from "http";
-import socketConfiguration from "../utils/socketConfig";
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import socketConfiguration from "./utils/socketConfig";
 
 const app = express();
 const server = createServer(app)
@@ -18,6 +17,6 @@ socketConfiguration(server)
 
 app.use(mainRouter)
 
-app.listen(8080, () => console.log("Server ready on port 3000."));
+app.listen(123, () => console.log("Server ready on port 3000."));
 
 module.exports = app;

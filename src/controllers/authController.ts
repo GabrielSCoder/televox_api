@@ -300,3 +300,7 @@ export const authenticate = async (req: any, res: any, next: any) => {
         return res.status(401).json({ error: "Token inválido." });
     }
 }
+
+export const meetAsync = async (req: any, res: any, next: any) => { 
+    return res.status(200).json({success : true, dados : "Olá, esse é a api do webvox!"})
+}

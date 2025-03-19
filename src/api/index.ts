@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors"
 import cookieParser from "cookie-parser"
-import { corsConfig, ServerPort } from "./utils/serverConfig";
-import mainRouter from "./routes/mainRoute";
+import { corsConfig } from "../utils/serverConfig";
+import mainRouter from "../routes/mainRoute";
 import { createServer } from "http";
-import socketConfiguration from "./utils/socketConfig";
+import socketConfiguration from "../utils/socketConfig";
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
 const app = express();

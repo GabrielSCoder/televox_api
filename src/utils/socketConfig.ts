@@ -17,6 +17,8 @@ export default function socketConfiguration(server: HttpServer) {
 
     io.on("connection", (socket) => {
 
+        console.log(Date.now(), "---------------conectado")
+
         socket.on("follow", async (data: followForm) => {
             console.log("---------------FOLLOW-----------\n")
             console.log(data)

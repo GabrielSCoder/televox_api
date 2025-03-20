@@ -45,8 +45,8 @@ export const login = async (req: { body: any, headers: any, cookies: any }, res:
 
         res.cookie("rfssid", refreshToken, {
             httpOnly: true,
-            secure: false,
-            sameSite: "lax",
+            secure: true,
+            sameSite: "none",
             // domain: "localhost",
             path: "/",
             maxAge : 2 * 24 * 60 * 60 * 1000 
@@ -156,8 +156,8 @@ export const logout = async (req: any, res: any) => {
 
         res.cookie("seddra", "", {
             httpOnly: true,
-            secure: false,
-            sameSite: "Strict",
+            secure: true,
+            sameSite: "none",
             // domain: "localhost",
             path: "/",
             maxAge: -1
@@ -165,8 +165,8 @@ export const logout = async (req: any, res: any) => {
 
         res.cookie("riptn", "", {
             httpOnly: true,
-            secure: false,
-            sameSite: "Strict",
+            secure: true,
+            sameSite: "none",
             // domain: "localhost",
             path: "/",
             maxAge: -1

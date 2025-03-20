@@ -2,11 +2,16 @@ import { login2 } from "../db/authDb"
 import jwt from "jsonwebtoken";
 import { CreateSession } from "../db/sessionDb";
 import { getById } from "../db/userDb";
+import dotenv from "dotenv"
 
 const db = require("../models");
 const Sessao = db.Sessao
 
 const TIME_LIMIT = 5 * 60 * 60 * 1000
+
+dotenv.config();
+
+const front = process.env.FRONT_URL || ""
 
 type resType = {
     status: (code: number) => any;
@@ -41,7 +46,7 @@ export const login = async (req: { body: any, headers: any, cookies: any }, res:
         res.cookie("rfssid", refreshToken, {
             httpOnly: true,
             secure: false,
-            sameSite: "Strict",
+            sameSite: "lax",
             // domain: "localhost",
             path: "/",
             maxAge : 2 * 24 * 60 * 60 * 1000 

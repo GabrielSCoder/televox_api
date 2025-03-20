@@ -1,5 +1,10 @@
+const dotenv = require("dotenv");
+dotenv.config();
+
+const front = process.env.FRONT_URL || ""
+
 export const corsConfig = {
-    origin: ["https://localhost:5173", "https://192.168.1.13:8080", "https://localhost:8080", "https://webvox-e86pxotwp-gabrielscoders-projects.vercel.app"],
+    origin: [front, "localhost"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization", "HMAC", "Timestamp"],
     exposedHeaders: ["Authorization"],

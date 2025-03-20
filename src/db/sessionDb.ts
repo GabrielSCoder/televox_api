@@ -19,7 +19,7 @@ export async function CreateSession(data: sessaoForm, res: any) {
         res.cookie("riptn", data.fingerPrint, {
             httpOnly: true,
             secure: false,
-            sameSite: "Strict",
+            sameSite: "lax",
             // domain: "localhost",
             path: "/",
             maxAge: 2 * 24 * 60 * 60 * 1000
@@ -28,7 +28,7 @@ export async function CreateSession(data: sessaoForm, res: any) {
         res.cookie("seddra", s.ip_address, {
             httpOnly: true,
             secure: false,
-            sameSite: "Strict",
+            sameSite: "lax",
             // domain: "localhost",
             path: "/",
             maxAge: 2 * 24 * 60 * 60 * 1000

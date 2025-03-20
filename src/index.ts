@@ -18,4 +18,6 @@ socketConfiguration(server)
 
 app.use(mainRouter)
 
-server.listen(ServerPort, "0.0.0.0",  () => console.log("Servidor rodando na porta 3003"));
+server.listen(ServerPort, () => console.log("Servidor rodando na porta 3003"));
+
+module.exports = app;

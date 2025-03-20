@@ -7,7 +7,7 @@
     "dev": "nodemon",
     "build": "tsc && npm run copy-models && npm run copy-config",
     "copy-models": "ncp ./src/models ./dist/models",
-    "copy-config" : "ncp ./src/config ./dist/config"
+    "copy-config": "ncp ./src/config ./dist/config"
   },
   "keywords": [],
   "author": "",
@@ -34,6 +34,7 @@
     "ncp": "^2.0.0",
     "nodemon": "^3.1.9",
     "sequelize-cli": "^6.6.2",
+    "serverless-bundle": "^6.3.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
   }

@@ -11,7 +11,6 @@ const TIME_LIMIT = 5 * 60 * 60 * 1000
 
 dotenv.config();
 
-const front = process.env.FRONT_URL || ""
 
 type resType = {
     status: (code: number) => any;
@@ -20,6 +19,7 @@ type resType = {
 }
 
 export const generateTokens = (user: { id: any; }) => {
+    console.log("--------------------------",process.env.ACCESS_SECRET as string, process.env.REFRESH_SECRET as string)
     const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_SECRET as string, { expiresIn: "10s" });
     const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET as string, { expiresIn: "5d" });
 
@@ -29,7 +29,9 @@ export const generateTokens = (user: { id: any; }) => {
 export const login = async (req: { body: any, headers: any, cookies: any }, res: resType) => {
 
     try {
+        console.log("----------------------", req.body)
         const { email, senha, os, finger } = req.body
+
 
         if (!email || !senha || !os || !finger) {
             return res.status(401).json({ success: false, error: "Dados obrigatórios" })

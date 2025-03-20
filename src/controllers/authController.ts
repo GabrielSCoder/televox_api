@@ -26,6 +26,10 @@ export const login = async (req: { body: any, headers: any, cookies: any }, res:
     try {
         const { email, senha, os, finger } = req.body
 
+        if (!email || !senha || !os || !finger) {
+            return res.status(401).json({ success: false, error: "Dados obrigatórios" })
+        }
+
 
         const resp = await login2({ email, senha })
 

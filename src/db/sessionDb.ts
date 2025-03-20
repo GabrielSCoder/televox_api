@@ -2,22 +2,27 @@ import { sessaoForm } from "../types/sessaoT";
 
 const { Sessao, Usuario } = require("../models")
 
-export async function CreateSession(data: sessaoForm, res : any) {
+export async function CreateSession(data: sessaoForm, res: any) {
     console.log(data)
     if (data.fingerPrint && data.ip && data.os && data.usuario_id) {
+        const newsession = { os_browser: data.os, fingerprint_id: data.fingerPrint, ip_address: data.ip, usuario_id: data.usuario_id, data_login: Date.now() }
+        console.log("\n-------newsession--------------\n", newsession)
         const check = await Usuario.findByPk(data.usuario_id)
-        if (!check) throw new Error("Usuário não encontrado")
-        const s = await Sessao.create({os_browser : data.os, fingerprint_id : data.fingerPrint, ip_address : data.ip, usuario_id : data.usuario_id, data_login : Date.now()})
-        
-        if (!s) throw new Error("Erro interno na criação de sessão")
-        
+
+        if (!check)
+        return res.status(401).json({ success: false, error: "Usuário não encontrado" })
+
+        const s = await Sessao.create(newsession)
+
+        if (!s) return res.status(401).json({ success: false, error: "Erro na criação da sessão" })
+
         res.cookie("riptn", data.fingerPrint, {
             httpOnly: true,
             secure: false,
             sameSite: "Strict",
             // domain: "localhost",
             path: "/",
-            maxAge : 2 * 24 * 60 * 60 * 1000 
+            maxAge: 2 * 24 * 60 * 60 * 1000
         })
 
         res.cookie("seddra", s.ip_address, {
@@ -26,12 +31,12 @@ export async function CreateSession(data: sessaoForm, res : any) {
             sameSite: "Strict",
             // domain: "localhost",
             path: "/",
-            maxAge : 2 * 24 * 60 * 60 * 1000 
+            maxAge: 2 * 24 * 60 * 60 * 1000
         })
 
         return s
     } else {
-        throw new Error("Dados obrigatórios")
+        return res.status(401).json({ success: false, error: "Dados obrigatórios"})
     }
 }
 

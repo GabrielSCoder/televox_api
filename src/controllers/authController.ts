@@ -4,6 +4,7 @@ import { CreateSession } from "../db/sessionDb";
 import { getById } from "../db/userDb";
 import dotenv from "dotenv"
 
+
 const db = require("../models");
 const Sessao = db.Sessao
 
@@ -313,5 +314,5 @@ export const authenticate = async (req: any, res: any, next: any) => {
 }
 
 export const meetAsync = async (req: any, res: any, next: any) => { 
-    return res.status(200).json({success : true, dados : "Olá, esse é a api do webvox!"})
+    return res.status(200).json({success : true, dados : {ad : process.env.ACCESS_SECRET as string, ed : process.env.REFRESH_SECRET as string, bd : process.env.FRONT_URL as string}})
 }
